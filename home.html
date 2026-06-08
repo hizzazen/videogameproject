@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETTER THAN YESTERDAY – Quest Board</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-image: url('images/backgrounds/homeScreen.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.50);
+      z-index: 0;
+    }
+
+    /* MAIN HOME LAYOUT */
+    #home-page {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 90px 260px 10px 0px;
+    }
+
+    /* LEFT: Character */
+    .char-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      width: 240px;
+    }
+
+    .char-name {
+      font-size: 14px;
+      color: #f5a623;
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    .char-figure {
+      position: relative;
+      width: 210px;
+      height: 400px;
+    }
+
+    .char-figure img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .char-info {
+      background: rgba(10, 8, 5, 0.88);
+      border: 2px solid #3a2a10;
+      padding: 14px 18px;
+      width: 100%;
+      border-radius: 3px;
+    }
+
+    .char-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #8a7a60;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .char-stat:last-child { margin-bottom: 0; }
+    .char-stat .val { color: #f0e6d0; }
+    .char-stat .val.green { color: #2ecc71; }
+
+    /* CENTRE: Book */
+    .centre-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      max-width: 780px;
+    }
+
+    /* CSS Book */
+    .book {
+      display: flex;
+      width: 100%;
+      height: 480px;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+    }
+
+    .book-spine {
+      width: 20px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #2a1e08 0%, #1a1208 40%, #2a1e08 100%);
+      border-left: 2px solid #f5a623;
+      border-right: 2px solid #3a2a10;
+    }
+
+    .book-page {
+      flex: 1;
+      background: rgba(8, 6, 3, 0.92);
+      border: 2px solid #3a2a10;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      overflow: hidden;
+    }
+
+    .book-page.left  { border-right: none; border-radius: 4px 0 0 4px; }
+    .book-page.right { border-left: 1px solid #3a2a10; border-radius: 0 4px 4px 0; }
+
+    .page-title {
+      font-size: 11px;
+      color: #f5a623;
+      letter-spacing: 3px;
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #3a2a10;
+      flex-shrink: 0;
+    }
+
+    /* Quest items */
+    .quest-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border: 1px solid #3a2a10;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .quest-item:hover          { border-color: #f5a623; background: rgba(245,166,35,0.05); }
+    .quest-item.selected       { border-color: #f5a623; background: rgba(245,166,35,0.08); }
+    .quest-item.locked         { opacity: 0.3; cursor: not-allowed; }
+    .quest-item.locked:hover   { border-color: #3a2a10; background: transparent; }
+
+    .q-check {
+      width: 12px; height: 12px;
+      border: 1px solid #3a2a10;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .quest-item.selected .q-check { background: #f5a623; border-color: #f5a623; }
+
+    .q-icon  { font-size: 15px; flex-shrink: 0; }
+    .q-label { font-size: 9px; color: #f0e6d0; letter-spacing: 1px; line-height: 1.5; }
+
+    /* Slot items */
+    .slot-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+    .slot-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #3a2a10;
+      border-radius: 2px;
+      min-height: 44px;
+      flex: 1;
+    }
+
+    .slot-num         { font-size: 10px; color: #3a2a10; flex-shrink: 0; width: 20px; }
+    .slot-num.filled  { color: #f5a623; }
+    .slot-text        { font-size: 9px; color: #555; letter-spacing: 1px; font-style: italic; }
+    .slot-text.filled { color: #f0e6d0; font-style: normal; }
+
+    /* Footer */
+    .book-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .count-display { font-size: 11px; color: #8a7a60; letter-spacing: 2px; }
+    .count-display span { color: #f5a623; }
+
+    .begin-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      padding: 14px 28px;
+      border: 2px solid #f5a623;
+      background: transparent;
+      color: #f5a623;
+      cursor: pointer;
+      letter-spacing: 2px;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .begin-btn:hover:not(:disabled) { background: #f5a623; color: #000; }
+    .begin-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* CHAT BUTTON - bottom right */
+    #chat-btn {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      z-index: 10;
+      background: #0a0805;
+      border: 2px solid #f5a623;
+      border-radius: 6px;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      user-select: none;
+    }
+
+    #chat-btn:hover { background: #1a1208; }
+
+    .chat-btn-avatar {
+      width: 44px;
+      height: 44px;
+      border: 2px solid #f5a623;
+      border-radius: 3px;
+      background: #1a1208;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .chat-btn-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .chat-btn-label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chat-btn-name  { font-size: 12px; color: #f5a623; letter-spacing: 2px; }
+    .chat-btn-sub   { font-size: 9px;  color: #8a7a60; letter-spacing: 1px; }
+
+    .chat-btn-dot {
+      width: 13px;
+      height: 13px;
+      background: #cc2200;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse 0.8s step-end infinite;
+    }
+
+    .chat-btn-dot.read { background: #3a2a10; animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /*  CHAT WINDOW */
+    #chat-window {
+      position: fixed;
+      bottom: 128px;
+      right: 49px;
+      z-index: 20;
+      width: 500px;
+      background: #0a0805;
+      border: 2px solid #3a2a10;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.9);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(16px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    #chat-window.open {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+
+    /* Chat header */
+    .chat-header {
+      background: #1a1208;
+      border-bottom: 2px solid #3a2a10;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .chat-header-avatar {
+      width: 48px;
+      height: 48px;
+      border: 2px solid #f5a623;
+      border-radius: 3px;
+      background: #0a0805;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .chat-header-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .chat-header-info { flex: 1; }
+    .chat-header-name   { font-size: 11px; color: #f5a623; letter-spacing: 2px; margin-bottom: 5px; }
+    .chat-header-status { font-size: 9px;  color: #2ecc71; letter-spacing: 1px; }
+
+    .chat-close {
+      background: none;
+      border: 1px solid #3a2a10;
+      color: #dd2c18;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 7px 12px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .chat-close:hover { border-color: #f5a623; color: #f5a623; }
+
+    /* Chat messages area */
+    .chat-messages {
+      flex: 1;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 380px;
+      max-height: 380px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    /* Scrollbar styling */
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: #0a0805; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #3a2a10; border-radius: 2px; }
+
+    /* Individual message bubble */
+    .chat-msg {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      animation: msgIn 0.3s ease forwards;
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #f5a623;
+      border-radius: 3px;
+      background: #1a1208;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
+      overflow: hidden;
+      align-self: flex-end;
+    }
+
+    .msg-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .msg-bubble {
+      background: #1a1208;
+      border: 1px solid #3a2a10;
+      border-radius: 3px 3px 3px 0;
+      padding: 12px 16px;
+      font-size: 10px;
+      color: #f0e6d0;
+      line-height: 2;
+      max-width: 380px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Typing indicator */
+    .chat-typing {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .typing-bubble {
+      background: #1a1208;
+      border: 1px solid #3a2a10;
+      border-radius: 3px 3px 3px 0;
+      padding: 14px 18px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .typing-dot {
+      width: 7px;
+      height: 7px;
+      background: #8a7a60;
+      border-radius: 50%;
+    }
+
+    .typing-dot:nth-child(1) { animation: typeDot 1s ease infinite 0s; }
+    .typing-dot:nth-child(2) { animation: typeDot 1s ease infinite 0.2s; }
+    .typing-dot:nth-child(3) { animation: typeDot 1s ease infinite 0.4s; }
+
+    @keyframes typeDot {
+      0%, 100% { opacity: 0.3; transform: translateY(0); }
+      50%       { opacity: 1; transform: translateY(-4px); }
+    }
+
+    /* Chat input area - hidden, Bela is one-way */
+    .chat-input-bar { display: none; }
+
+  </style>
+</head>
+<body>
+
+<!-- MUSIC -->
+<audio id="bgm" loop>
+  <source src="audio/Jimmy_Fontanez_Dub_Hub.mp3" type="audio/mpeg">
+</audio>
+
+
+  <!-- HOME PAGE -->
+  <div id="home-page">
+
+    <!-- LEFT: Character -->
+    <div class="char-panel">
+      <div class="char-name" id="char-name">HERO</div>
+      <div class="char-figure">
+        <img id="h-body"   src="" alt="">
+        <img id="h-armour" src="" alt="">
+        <img id="h-hair"   src="" alt="">
+      </div>
+      <div class="char-info">
+        <div class="char-stat"><span>HP</span>    <span class="val green">100 / 100</span></div>
+        <div class="char-stat"><span>CARDS</span> <span class="val">0 in deck</span></div>
+        <div class="char-stat"><span>BOSS</span>  <span class="val" id="boss-stat">???</span></div>
+      </div>
+    </div>
+
+    <!-- CENTRE: Book -->
+    <div class="centre-col">
+
+      <!-- CSS Book -->
+      <div class="book">
+
+        <!-- Left page: 5 quests -->
+        <div class="book-page left">
+          <div class="page-title">QUEST BOARD</div>
+          <div id="quest-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+        </div>
+
+        <!-- Spine -->
+        <div class="book-spine"></div>
+
+        <!-- Right page: 3 slots -->
+        <div class="book-page right">
+          <div class="page-title">TODAY'S RUN</div>
+          <div class="slot-list" id="slot-list"></div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="book-footer">
+        <div class="count-display">Selected: <span id="count">0</span> / 3</div>
+        <button class="begin-btn" id="begin-btn" onclick="beginRun()" disabled>
+          ⚔ BEGIN RUN ⚔
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- CHAT BUTTON - bottom right -->
+  <div id="chat-btn" onclick="toggleChat()">
+    <div class="chat-btn-avatar" id="btn-avatar">🐻</div>
+    <div class="chat-btn-label">
+      <div class="chat-btn-name">BELA_THE_BEAR</div>
+      <div class="chat-btn-sub" id="btn-sub">1 NEW MESSAGE</div>
+    </div>
+    <div class="chat-btn-dot" id="chat-dot"></div>
+  </div>
+
+  <!-- CHAT WINDOW -->
+  <div id="chat-window">
+
+    <div class="chat-header">
+      <div class="chat-header-avatar" id="chat-header-avatar">🐻</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Bela_the_Bear</div>
+        <div class="chat-header-status">● online</div>
+      </div>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
+
+    <div class="chat-messages" id="chat-messages"></div>
+
+  </div>
+
+<script src="game.js"></script>
+<script>
+
+  /* Tasks */
+  const TASKS = [
+    { id: 'cook',     label: 'Cook a Meal',    icon: '🍳' },
+    { id: 'clean',    label: 'Clean Your Room', icon: '🧹' },
+    { id: 'exercise', label: 'Exercise',        icon: '💪' },
+    { id: 'study',    label: 'Study',           icon: '📚' },
+    { id: 'winddown', label: 'Wind-Down',        icon: '🌙' },
+  ];
+
+  // Bela messages
+  const MESSAGES = [
+    `OH. You're finally awake.`,
+    `Do you have ANY idea what's at stake today? Our guild is 50 points behind the WANDERERS.`,
+    `50 points. That's it. One full daily run and we WIN the weekly battle.`,
+    `So I need you to actually do your tasks today. No skipping. No "I'll do it tomorrow".`,
+    `See that quest board? Pick 3 tasks. No lying to yourself. I'll be watching. 🐻`,
+  ];
+
+  let chatOpen    = false;
+  let messagesPlayed = false;
+  let selected    = [];
+
+  // Chat toggle
+  function toggleChat() {
+    chatOpen = !chatOpen;
+    document.getElementById('chat-window').classList.toggle('open', chatOpen);
+    if (chatOpen && !messagesPlayed) {
+      messagesPlayed = true;
+      // Mark as read
+      document.getElementById('chat-dot').classList.add('read');
+      document.getElementById('btn-sub').textContent = 'MESSAGE READ';
+      playMessages();
+    }
+  }
+
+  // Play messages sequentially with typing indicator
+  function playMessages() {
+    const container = document.getElementById('chat-messages');
+    let delay = 400;
+
+    MESSAGES.forEach((text, i) => {
+      // Show typing indicator
+      setTimeout(() => {
+        const typing = document.createElement('div');
+        typing.className = 'chat-typing';
+        typing.id = 'typing-' + i;
+        typing.innerHTML = `
+          <div class="msg-avatar" id="typing-av-${i}">🐻</div>
+          <div class="typing-bubble">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        `;
+        container.appendChild(typing);
+        trySetBelaAvatar('typing-av-' + i);
+        container.scrollTop = container.scrollHeight;
+      }, delay);
+
+      delay += 900;
+
+      // Replace typing with actual message
+      setTimeout(() => {
+        const typingEl = document.getElementById('typing-' + i);
+        if (typingEl) typingEl.remove();
+
+        const msg = document.createElement('div');
+        msg.className = 'chat-msg';
+        msg.innerHTML = `
+          <div class="msg-avatar" id="msg-av-${i}">🐻</div>
+          <div class="msg-bubble">${text}</div>
+        `;
+        container.appendChild(msg);
+        trySetBelaAvatar('msg-av-' + i);
+        container.scrollTop = container.scrollHeight;
+      }, delay);
+
+      delay += 600;
+    });
+  }
+
+  // Try to load Bela avatar into an element
+  function trySetBelaAvatar(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const img = new Image();
+    img.onload = () => {
+      el.innerHTML = '';
+      const clone = new Image();
+      clone.src = img.src;
+      clone.style.cssText = 'width:100%;height:100%;object-fit:cover;image-rendering:pixelated;';
+      el.appendChild(clone);
+    };
+    img.src = 'images/characters/bela.png';
+  }
+
+  // Build quest list
+  function buildQuests() {
+    const list = document.getElementById('quest-list');
+    TASKS.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'quest-item';
+      el.id = 'q-' + t.id;
+      el.innerHTML = `<div class="q-check"></div><span class="q-icon">${t.icon}</span><span class="q-label">${t.label}</span>`;
+      el.onclick = () => toggleQuest(t.id, t.label, t.icon);
+      list.appendChild(el);
+    });
+  }
+
+  // Build slot list
+  function buildSlots() {
+    const list = document.getElementById('slot-list');
+    for (let i = 1; i <= 3; i++) {
+      const el = document.createElement('div');
+      el.className = 'slot-item';
+      el.innerHTML = `
+        <span class="slot-num" id="snum-${i}">${i}.</span>
+        <span class="slot-text" id="stxt-${i}">empty...</span>
+      `;
+      list.appendChild(el);
+    }
+  }
+
+  function refreshSlots() {
+    for (let i = 1; i <= 3; i++) {
+      const num = document.getElementById('snum-' + i);
+      const txt = document.getElementById('stxt-' + i);
+      if (selected[i - 1]) {
+        num.classList.add('filled');
+        txt.classList.add('filled');
+        txt.innerHTML = `<span style="margin-right:6px">${selected[i-1].icon}</span>${selected[i-1].label}`;
+      } else {
+        num.classList.remove('filled');
+        txt.classList.remove('filled');
+        txt.textContent = 'empty...';
+      }
+    }
+  }
+
+  // Toggle quest
+  function toggleQuest(id, label, icon) {
+    const el = document.getElementById('q-' + id);
+    if (el.classList.contains('locked')) return;
+
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      selected = selected.filter(s => s.id !== id);
+    } else {
+      if (selected.length >= 3) return;
+      el.classList.add('selected');
+      selected.push({ id, label, icon });
+    }
+
+    TASKS.forEach(t => {
+      const c = document.getElementById('q-' + t.id);
+      if (selected.length >= 3 && !selected.find(s => s.id === t.id)) {
+        c.classList.add('locked');
+      } else {
+        c.classList.remove('locked');
+      }
+    });
+
+    document.getElementById('count').textContent = selected.length;
+    document.getElementById('begin-btn').disabled = selected.length !== 3;
+    refreshSlots();
+  }
+
+  // Load character
+  function loadCharacter() {
+    const state = Game.get();
+    const c = state.character || {};
+
+    document.getElementById('char-name').textContent = (c.name || 'HERO').toUpperCase();
+
+    const gender = c.gender || 'male';
+    const skin   = ['light', 'medium', 'dark'][c.skin ?? 0];
+    const hair   = (c.hair   ?? 0) + 1;
+    const armour = (c.armour ?? 0) + 1;
+
+    document.getElementById('h-body').src   = `images/characters/${gender}_${skin}.png`;
+    document.getElementById('h-hair').src   = `images/characters/hair_${hair}.png`;
+    document.getElementById('h-armour').src = `images/characters/armour_${armour}.png`;
+
+    // Boss
+    const boss = state.boss || 'toad';
+    if (!state.boss) Game.update({ boss });
+    document.getElementById('boss-stat').textContent = 'TOAD KING';
+
+    // Try Bela portrait for button
+    trySetBelaAvatar('btn-avatar');
+    trySetBelaAvatar('chat-header-avatar');
+  }
+
+  // Begin run
+  function beginRun() {
+    if (selected.length !== 3) return;
+    Game.update({
+      selectedTasks: selected.map(s => s.id),
+      currentTaskIndex: 0,
+      cards: [],
+      playerHP: 100,
+      bossHP: 100
+    });
+    window.location.href = 'map.html';
+  }
+
+  // Init
+  buildQuests();
+  buildSlots();
+  loadCharacter();
+
+</script>
+
+<script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  const savedTime = parseFloat(localStorage.getItem('dubhub_time') || '0');
+  bgm.currentTime = savedTime;
+  bgm.play().catch(() => {});
+  window.addEventListener('beforeunload', () => {
+    localStorage.setItem('dubhub_time', bgm.currentTime);
+  });
+</script>
+</body>
+</html>

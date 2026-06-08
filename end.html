@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETTER THAN YESTERDAY – End</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-image: url('images/backgrounds/bossRoom.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+      cursor: pointer;
+    }
+
+    /* Dark overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* PHASE WRAPPER
+       All phases sit on top of each other,
+       only the active one is visible */
+    .phase {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+
+    .phase.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* PHASE 1A - WIN: dead boss centred */
+    #phase-win-boss {
+      background: rgba(0, 0, 0, 0.75);
+      justify-content: flex-start;
+      padding-top: 30px;
+    }
+
+    .dead-boss-img {
+      width: 1500px;
+      max-width: 95vw;
+      image-rendering: pixelated;
+      animation: boss-slump 1s ease forwards;
+    }
+
+    @keyframes boss-slump {
+      from { transform: translateY(-30px) scale(1.05); opacity: 0; }
+      to   { transform: translateY(0)     scale(1);    opacity: 1; }
+    }
+
+    .victory-title {
+      font-size: 40px;
+      color: #f5a623;
+      letter-spacing: 6px;
+      margin-top: 20px;
+      text-shadow:
+        0 0 10px rgba(245,166,35,0.8),
+        4px 4px 0 #000;
+      animation: victory-glow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes victory-glow {
+      0%, 100% { text-shadow: 0 0 10px rgba(245,166,35,0.8), 4px 4px 0 #000; }
+      50%       { text-shadow: 0 0 30px rgba(245,166,35,1), 0 0 60px rgba(245,166,35,0.5), 4px 4px 0 #000; }
+    }
+
+    .click-continue {
+      font-size: 8px;
+      color: #8a7a60;
+      letter-spacing: 3px;
+      margin-top: 20px;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* PHASE 1B - LOSS: mirrors win layout */
+    #phase-loss-boss {
+      background: rgba(0, 0, 0, 0.75);
+      justify-content: flex-start;
+      padding-top: 30px;
+    }
+
+    .menacing-boss {
+      width: 1500px;
+      max-width: 95vw;
+      image-rendering: pixelated;
+      animation: boss-slump 1s ease forwards;
+      filter: none;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .defeat-title {
+      font-size: 40px;
+      color: #cc2200;
+      letter-spacing: 6px;
+      margin-top: 20px;
+      text-shadow:
+        0 0 10px rgba(200,34,0,0.8),
+        4px 4px 0 #000;
+      animation: defeat-glow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes defeat-glow {
+      0%, 100% { text-shadow: 0 0 10px rgba(200,34,0,0.8), 4px 4px 0 #000; }
+      50%       { text-shadow: 0 0 30px rgba(200,34,0,1), 0 0 60px rgba(200,34,0,0.5), 4px 4px 0 #000; }
+    }
+
+    .defeat-sub { display: none; }
+
+    /* PHASE 2 - REWARD PICK (win only) */
+    #phase-rewards {
+      background: rgba(0, 0, 0, 0.82);
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .rewards-title {
+      font-size: 16px;
+      color: #f5a623;
+      letter-spacing: 4px;
+      text-align: center;
+    }
+
+    .rewards-sub {
+      font-size: 10px;
+      color: #8a7a60;
+      letter-spacing: 2px;
+      margin-top: -28px;
+    }
+
+    .rewards-row {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reward-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      background: #1a1208;
+      border: 2px solid #3a2a10;
+      border-radius: 6px;
+      padding: 32px 24px;
+      width: 260px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .reward-card:hover {
+      border-color: #f5a623;
+      background: #2a1e08;
+      transform: translateY(-12px);
+    }
+
+    .reward-card:hover .reward-glow {
+      opacity: 1;
+    }
+
+    .reward-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      box-shadow: 0 0 30px rgba(245,166,35,0.4);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .reward-img {
+      width: 160px;
+      height: 160px;
+      image-rendering: pixelated;
+      object-fit: contain;
+    }
+
+    .reward-name {
+      font-size: 12px;
+      color: #f5a623;
+      text-align: center;
+      letter-spacing: 1px;
+      line-height: 1.8;
+    }
+
+    .reward-desc {
+      font-size: 10px;
+      color: #8a7a60;
+      text-align: center;
+      letter-spacing: 1px;
+      line-height: 1.8;
+      font-style: italic;
+    }
+
+    /* Selected state */
+    .reward-card.chosen {
+      border-color: #f5a623;
+      background: #2a1e08;
+      transform: scale(1.08);
+    }
+    
+
+    /* PHASE 3 - BELA DIALOGUE */
+    #phase-bela {
+      background: rgba(0, 0, 0, 0.88);
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .bela-outcome-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .bela-outcome-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .bela-big-avatar {
+      width: 80px;
+      height: 80px;
+      border: 3px solid #f5a623;
+      border-radius: 6px;
+      background: #1a1208;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .bela-big-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .bela-header-text { display: flex; flex-direction: column; gap: 6px; }
+    .bela-username { font-size: 11px; color: #f5a623; letter-spacing: 2px; }
+    .bela-status   { font-size: 8px;  color: #2ecc71; letter-spacing: 1px; }
+
+    .bela-speech-bubble {
+      background: #1a1208;
+      border: 2px solid #3a2a10;
+      border-radius: 6px;
+      padding: 24px 28px;
+      width: 100%;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bela-speech-text {
+      font-size: 10px;
+      color: #f0e6d0;
+      line-height: 2.2;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .bela-progress {
+      font-size: 7px;
+      color: #3a2a10;
+      letter-spacing: 2px;
+    }
+
+    /* PHASE 4 - GUILD OUTCOMe */
+    #phase-guild {
+      background: rgba(0, 0, 0, 0.92);
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .guild-title {
+      font-size: 15px;
+      color: #8a7a60;
+      letter-spacing: 4px;
+    }
+
+    .guild-result {
+      font-size: 40px;
+      letter-spacing: 6px;
+      text-align: center;
+    }
+
+    .guild-result.win  { color: #f5a623; text-shadow: 0 0 25px rgba(245,166,35,0.6), 4px 4px 0 #000; }
+    .guild-result.loss { color: #cc2200; text-shadow: 0 0 25px rgba(200,34,0,0.6), 4px 4px 0 #000; }
+
+    .guild-flavour {
+      font-size: 9px;
+      color: #8a7a60;
+      letter-spacing: 2px;
+      text-align: center;
+      line-height: 2.5;
+      max-width: 600px;
+    }
+
+    /* score display */
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .score-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-name { font-size: 10px; color: #8a7a60; letter-spacing: 2px; }
+    .score-num  { font-size: 36px; letter-spacing: 2px; }
+    .score-num.us   { color: #f5a623; }
+    .score-num.them { color: #cc2200; }
+
+    .score-vs { font-size: 14px; color: #3a2a10; letter-spacing: 4px; }
+
+    .process-slide {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .play-again-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 16px 40px;
+      border: 2px solid #f5a623;
+      background: transparent;
+      color: #f5a623;
+      cursor: pointer;
+      letter-spacing: 3px;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+      margin-top: 10px;
+      animation: btn-flash 1s step-end infinite;
+    }
+
+    @keyframes btn-flash {
+      0%, 100% { background: #f5a623; color: #000; }
+      50%       { background: transparent; color: #f5a623; }
+    }
+
+    #phase-process-1 {
+      position: relative;
+    }
+
+    #phase-process-1 .play-again-btn {
+      position: absolute;
+      bottom: 40px;
+      right: 60px;
+      left: auto;
+      transform: none;
+      z-index: 10;
+      background: #f5a623;
+      color: #000;
+      border-color: #f5a623;
+    }
+  </style>
+</head>
+<body>
+
+<!-- MUSIC -->
+<audio id="bgm" loop>
+  <source src="audio/Jimmy_Fontanez_Dub_Hub.mp3" type="audio/mpeg">
+</audio>
+
+
+  <!-- PHASE 1A - WIN: dead boss -->
+  <div class="phase" id="phase-win-boss">
+    <p class="victory-title">VICTORY</p>
+    <img class="dead-boss-img" id="dead-boss-img" src="" alt="defeated boss">
+    <p class="click-continue">[ CLICK TO CONTINUE ]</p>
+  </div>
+
+  <!-- PHASE 1B - LOSS: scary boss -->
+  <div class="phase" id="phase-loss-boss">
+    <p class="defeat-title">DEFEAT</p>
+    <img class="menacing-boss" id="menacing-boss-img" src="" alt="boss">
+    <p class="click-continue">[ CLICK TO CONTINUE ]</p>
+  </div>
+
+  <!-- PHASE 2 - REWARDS (win only) -->
+  <div class="phase" id="phase-rewards">
+    <p class="rewards-title">- CHOOSE YOUR REWARD -</p>
+    <p class="rewards-sub">pick one to keep</p>
+    <div class="rewards-row">
+
+      <div class="reward-card" id="reward-0" onclick="pickReward(0)">
+        <div class="reward-glow"></div>
+        <img class="reward-img" src="images/rewards/reward_1.png" alt="reward 1">
+        <p class="reward-name">GAUNTLETS OF GRIT</p>
+        <p class="reward-desc">worn by those who actually did the dishes</p>
+      </div>
+
+      <div class="reward-card" id="reward-1" onclick="pickReward(1)">
+        <div class="reward-glow"></div>
+        <img class="reward-img" src="images/rewards/reward_2.png" alt="reward 2">
+        <p class="reward-name">BOOTS OF MOMENTUM</p>
+        <p class="reward-desc">every step forward counts. even small ones.</p>
+      </div>
+
+      <div class="reward-card" id="reward-2" onclick="pickReward(2)">
+        <div class="reward-glow"></div>
+        <img class="reward-img" src="images/rewards/reward_3.png" alt="reward 3">
+        <p class="reward-name">PAULDRONS OF RESOLVE</p>
+        <p class="reward-desc">for shoulders broad enough to carry the week</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PHASE 3 - BELA DIALOGUE -->
+  <div class="phase" id="phase-bela">
+    <div class="bela-outcome-box">
+      <div class="bela-outcome-header">
+        <div class="bela-big-avatar" id="bela-avatar">🐻</div>
+        <div class="bela-header-text">
+          <p class="bela-username">Bela_the_Bear</p>
+          <p class="bela-status">● online</p>
+        </div>
+      </div>
+      <div class="bela-speech-bubble">
+        <p class="bela-speech-text" id="bela-text">...</p>
+      </div>
+      <p class="bela-progress" id="bela-progress">1 / 4</p>
+    </div>
+  </div>
+
+  <!-- PHASE 4 - GUILD OUTCOME -->
+  <div class="phase" id="phase-guild">
+    <p class="guild-title">- WEEKLY BATTLE RESULT -</p>
+    <p class="guild-result" id="guild-result">WE WON</p>
+    <div class="score-row">
+      <div class="score-team">
+        <p class="score-name">YOUR GUILD</p>
+        <p class="score-num us" id="score-us">350</p>
+      </div>
+      <p class="score-vs">VS</p>
+      <div class="score-team">
+        <p class="score-name">WANDERERS</p>
+        <p class="score-num them" id="score-them">300</p>
+      </div>
+    </div>
+    <p class="guild-flavour" id="guild-flavour">The WANDERERS have been defeated.<br>Bela is insufferably smug about it.</p>
+    <p class="click-continue">[ CLICK TO CONTINUE ]</p>
+  </div>
+
+  <!-- PHASE 5 - PROCESS SLIDE 1 -->
+  <div class="phase" id="phase-process-1">
+    <img class="process-slide" src="images/process/process.png" alt="development process">
+    <button class="play-again-btn" onclick="showPhase('phase-credits')">⚔ NEXT ⚔</button>
+  </div>
+
+  <!-- PHASE 6 - CREDITS -->
+  <div class="phase" id="phase-credits" style="background:#000;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center;">
+      <p style="font-size:20px;color:#f5a623;letter-spacing:4px;">- CREDITS -</p>
+      <div style="width:60px;height:1px;background:#3a2a10;"></div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:14px;color:#8a7a60;letter-spacing:3px;">MUSIC</p>
+        <p style="font-size:12px;color:#f0e6d0;letter-spacing:2px;line-height:2.2;">
+          Jimmy Fontanez - Dub Hub<br>
+          Jeremy Korpas - Sour Rock<br>
+          Density &amp; Time - MAZE
+        </p>
+      </div>
+      <div style="width:60px;height:1px;background:#3a2a10;"></div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:14px;color:#8a7a60;letter-spacing:3px;">RESEARCH</p>
+        <p style="font-size:12px;color:#f0e6d0;letter-spacing:2px;line-height:2.2;">
+          McGonigal, J. (2011).<br>
+          <span style="font-style:italic;color:#8a7a60;">Reality Is Broken: Why Games Make Us Better<br>and How They Can Change the World.</span><br>
+          Penguin Press.
+        </p>
+      </div>
+      <div style="width:60px;height:1px;background:#3a2a10;"></div>
+      <button class="play-again-btn" onclick="playAgain()" style="margin-top:8px;">⚔ PLAY AGAIN ⚔</button>
+    </div>
+  </div>
+
+<script src="game.js"></script>
+<script>
+
+  const state   = Game.get();
+  const outcome = state.fightOutcome;
+  const boss    = 'toad';
+
+  // Bela dialogue sets
+  const BELA_WIN = [
+    `...YOU ACTUALLY DID IT.`,
+    `I had a whole motivational speech prepared for if you failed and now I don't get to use it.`,
+    `The WANDERERS are DONE. We won the weekly battle because of you.`,
+    `Don't let it go to your head. See you tomorrow. 🐻`,
+  ];
+
+  const BELA_LOSS = [
+    `...`,
+    `What happened?`,
+    `I watched the WANDERERS celebrate. They made a little banner. It said "we won". Very hurtful.`,
+    `Go to sleep. We don't talk about today. Ever. 🐻`,
+  ];
+
+  // Guild outcome data
+  const GUILD_DATA = {
+    win:  { label: 'WE WON',  cls: 'win',  us: 350, them: 300, flavour: `The WANDERERS have been defeated.<br>Bela is insufferably smug about it.` },
+    loss: { label: 'WE LOST', cls: 'loss', us: 250, them: 300, flavour: `The WANDERERS are throwing a party.<br>You are not invited. Try again tomorrow.` },
+  };
+
+  // Phase management
+  let currentPhase = '';
+
+  function showPhase(id) {
+    document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    currentPhase = id;
+  }
+
+  // Click anywhere to advance
+  document.body.addEventListener('click', () => {
+    if (currentPhase === 'phase-win-boss') {
+      showPhase('phase-rewards');
+    } else if (currentPhase === 'phase-loss-boss') {
+      startBela();
+    } else if (currentPhase === 'phase-bela') {
+      advanceBela();
+    } else if (currentPhase === 'phase-guild') {
+      showPhase('phase-process-1');
+    } else if (currentPhase === 'phase-process-1') {
+      showPhase('phase-credits');
+    }
+  });
+
+  // Bela dialogue
+  const belaLines = outcome === 'win' ? BELA_WIN : BELA_LOSS;
+  let belaIndex = 0;
+
+  function startBela() {
+    belaIndex = 0;
+    showPhase('phase-bela');
+    updateBela();
+    tryBelaAvatar();
+  }
+
+  function advanceBela() {
+    belaIndex++;
+    if (belaIndex >= belaLines.length) {
+      showGuild();
+    } else {
+      updateBela();
+    }
+  }
+
+  function updateBela() {
+    document.getElementById('bela-text').textContent = belaLines[belaIndex];
+    document.getElementById('bela-progress').textContent = `${belaIndex + 1} / ${belaLines.length}`;
+  }
+
+  function tryBelaAvatar() {
+    const el = document.getElementById('bela-avatar');
+    const img = new Image();
+    img.onload = () => {
+      el.innerHTML = '';
+      const c = img.cloneNode();
+      c.style.cssText = 'width:100%;height:100%;object-fit:cover;image-rendering:pixelated;';
+      el.appendChild(c);
+    };
+    img.src = 'images/characters/bela.png';
+  }
+
+  // Guild outcome
+  function showGuild() {
+    const data = GUILD_DATA[outcome];
+    document.getElementById('guild-result').textContent  = data.label;
+    document.getElementById('guild-result').className    = 'guild-result ' + data.cls;
+    document.getElementById('score-us').textContent      = data.us;
+    document.getElementById('score-them').textContent    = data.them;
+    document.getElementById('guild-flavour').innerHTML   = data.flavour;
+    showPhase('phase-guild');
+  }
+
+  // Reward pick
+  function pickReward(i) {
+    document.querySelectorAll('.reward-card').forEach(c => c.classList.remove('chosen'));
+    document.getElementById('reward-' + i).classList.add('chosen');
+    Game.update({ reward: i });
+    // short pause then go to Bela
+    setTimeout(() => startBela(), 800);
+  }
+
+  // Play again
+  function playAgain() {
+    Game.reset();
+    window.location.href = 'index.html';
+  }
+
+  // Init
+  function init() {
+    if (outcome === 'win') {
+      // Show dead boss first
+      document.getElementById('dead-boss-img').src = `images/bosses/${boss}_4.png`;
+      showPhase('phase-win-boss');
+    } else {
+      // Show boss on loss screen
+      document.getElementById('menacing-boss-img').src = `images/bosses/${boss}_1.png`;
+      showPhase('phase-loss-boss');
+    }
+  }
+
+  init();
+
+</script>
+
+<script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+</script>
+</body>
+</html>

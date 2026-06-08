@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETTER THAN YESTERDAY – The Map</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-image: url('images/backgrounds/homeScreen.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 0;
+    }
+
+    /* PARCHMENT */
+    .map-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .parchment {
+      position: relative;
+      width: 102vw;
+      max-width: 1500px;
+      aspect-ratio: 1456 / 816;
+    }
+
+    .parchment-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      image-rendering: pixelated;
+    }
+
+    /* Canvas for the path - sits above parchment, below nodes */
+    #line-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Node layer */
+    #node-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Nodes */
+    .node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, filter 0.15s;
+      z-index: 2;
+    }
+
+    .node:hover {
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    .node-circle {
+      width: 90px;
+      height: 90px;
+      background: rgba(200, 155, 80, 0.35);
+      border: 2px solid rgba(100, 60, 15, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .node:hover .node-circle {
+      background: rgba(200, 155, 80, 0.6);
+      border-color: rgba(100, 60, 15, 0.9);
+      box-shadow: 0 0 16px rgba(180, 120, 40, 0.5);
+    }
+
+    .node-num {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      background: #5a3a0a;
+      border-radius: 50%;
+      font-size: 8px;
+      color: #f0d890;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #8a6020;
+    }
+
+    .node-label {
+      font-size: 9px;
+      color: #5a3a0a;
+      letter-spacing: 1px;
+      text-align: center;
+      background: rgba(240, 220, 160, 0.75);
+      padding: 3px 8px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    /* Boss node */
+    .boss-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 2;
+    }
+
+    .boss-circle {
+      width: 110px;
+      height: 110px;
+      background: rgba(100, 20, 10, 0.4);
+      border: 2px solid rgba(150, 40, 20, 0.7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      animation: pulse-boss 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-boss {
+      0%, 100% { box-shadow: 0 0 10px rgba(200,40,10,0.3); }
+      50%       { box-shadow: 0 0 24px rgba(200,40,10,0.6); }
+    }
+
+    .boss-label {
+      font-size: 9px;
+      color: #8a2010;
+      letter-spacing: 2px;
+      background: rgba(240, 220, 160, 0.75);
+      padding: 2px 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    /* Step counter */
+    .step-counter {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(10, 8, 5, 0.85);
+      border: 2px solid #3a2a10;
+      border-radius: 4px;
+      padding: 10px 24px;
+      font-size: 9px;
+      color: #f5a623;
+      letter-spacing: 3px;
+    }
+
+    /* Sample download */
+    #sample-btn {
+      position: absolute;
+      top: 6%;
+      right: 4.6%;
+      z-index: 5;
+      font-family: 'Press Start 2P', monospace;
+      color: #5a3a0a;
+      background: rgba(225, 190, 109, 0.85);
+      border: 3px solid rgba(100, 60, 15, 0.7);
+      border-radius: 6px;
+      padding: 20px 16px;
+      width: 160px;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.2s;
+    }
+
+    #sample-btn:hover { background: rgba(240, 220, 160, 1); }
+
+    #sample-btn .s-emoji { font-size: 36px; }
+    #sample-btn .s-text  { font-size: 7px; letter-spacing: 1px; line-height: 2; }
+    
+
+    /* CHAT BUTTON + WINDOW (same as home) */
+    #chat-btn {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      z-index: 10;
+      background: #0a0805;
+      border: 2px solid #f5a623;
+      border-radius: 6px;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      user-select: none;
+    }
+
+    #chat-btn:hover { background: #1a1208; }
+
+    .chat-btn-avatar {
+      width: 44px; height: 44px;
+      border: 2px solid #f5a623;
+      border-radius: 3px;
+      background: #1a1208;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .chat-btn-avatar img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+    .chat-btn-label { display: flex; flex-direction: column; gap: 6px; }
+    .chat-btn-name  { font-size: 12px; color: #f5a623; letter-spacing: 2px; }
+    .chat-btn-sub   { font-size: 9px;  color: #8a7a60; letter-spacing: 1px; }
+
+    .chat-btn-dot {
+      width: 13px; height: 13px;
+      background: #cc2200;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse-dot 0.8s step-end infinite;
+    }
+
+    .chat-btn-dot.read { background: #3a2a10; animation: none; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    #chat-window {
+      position: fixed;
+      bottom: 128px;
+      right: 50px;
+      z-index: 20;
+      width: 500px;
+      background: #0a0805;
+      border: 2px solid #3a2a10;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.9);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(16px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    #chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+    .chat-header {
+      background: #1a1208;
+      border-bottom: 2px solid #3a2a10;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .chat-header-avatar {
+      width: 48px; height: 48px;
+      border: 2px solid #f5a623;
+      border-radius: 3px;
+      background: #0a0805;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0; overflow: hidden;
+    }
+
+    .chat-header-avatar img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+    .chat-header-info { flex: 1; }
+    .chat-header-name   { font-size: 10px; color: #f5a623; letter-spacing: 2px; margin-bottom: 5px; }
+    .chat-header-status { font-size: 8px;  color: #2ecc71; letter-spacing: 1px; }
+
+    .chat-close {
+      background: none; border: 1px solid #3a2a10; color: #8a7a60;
+      color: #dd2c18;
+      font-family: 'Press Start 2P', monospace; font-size: 9px;
+      padding: 7px 12px; cursor: pointer; border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .chat-close:hover { border-color: #f5a623; color: #f5a623; }
+
+    .chat-messages {
+      flex: 1; padding: 20px 18px;
+      display: flex; flex-direction: column; gap: 14px;
+      min-height: 380px; max-height: 380px;
+      overflow-y: auto; scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: #0a0805; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #3a2a10; border-radius: 2px; }
+
+    .chat-msg { display: flex; align-items: flex-end; gap: 10px; animation: msgIn 0.3s ease forwards; }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar {
+      width: 36px; height: 36px;
+      border: 1px solid #f5a623; border-radius: 3px;
+      background: #1a1208;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0; overflow: hidden; align-self: flex-end;
+    }
+
+    .msg-avatar img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+
+    .msg-bubble {
+      background: #1a1208; border: 1px solid #3a2a10;
+      border-radius: 3px 3px 3px 0;
+      padding: 12px 16px; font-size: 9px; color: #f0e6d0;
+      line-height: 2; max-width: 380px; letter-spacing: 0.5px;
+    }
+
+    .msg-bubble a {
+      display: inline-block; margin-top: 10px;
+      color: #f5a623; text-decoration: none;
+      border: 1px solid #f5a623; padding: 6px 12px;
+      border-radius: 2px; font-size: 8px; letter-spacing: 1px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .msg-bubble a:hover { background: #f5a623; color: #000; }
+
+    .chat-typing { display: flex; align-items: flex-end; gap: 10px; }
+
+    .typing-bubble {
+      background: #1a1208; border: 1px solid #3a2a10;
+      border-radius: 3px 3px 3px 0;
+      padding: 14px 18px; display: flex; gap: 5px; align-items: center;
+    }
+
+    .typing-dot { width: 7px; height: 7px; background: #8a7a60; border-radius: 50%; }
+    .typing-dot:nth-child(1) { animation: typeDot 1s ease infinite 0s; }
+    .typing-dot:nth-child(2) { animation: typeDot 1s ease infinite 0.2s; }
+    .typing-dot:nth-child(3) { animation: typeDot 1s ease infinite 0.4s; }
+
+    @keyframes typeDot {
+      0%, 100% { opacity: 0.3; transform: translateY(0); }
+      50%       { opacity: 1;   transform: translateY(-4px); }
+    }
+
+    .chat-input-bar { display: none; }
+
+  </style>
+</head>
+<body>
+
+<!-- MUSIC -->
+<audio id="bgm" loop>
+  <source src="audio/Jimmy_Fontanez_Dub_Hub.mp3" type="audio/mpeg">
+</audio>
+
+
+  <div class="map-wrap">
+    <div class="parchment" id="parchment">
+
+      <img class="parchment-img" src="images/backgrounds/map_parchment.png" alt="map">
+
+      <!-- Canvas for winding path -->
+      <canvas id="line-canvas"></canvas>
+
+      <!-- Nodes placed by JS -->
+      <div id="node-layer"></div>
+      <a id="sample-btn" href="sample_photos.zip" download>
+        <div class="s-emoji">📦</div>
+        <div class="s-text">SAMPLE PHOTOS<br>DOWNLOAD HERE</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Step counter -->
+  <div class="step-counter" id="step-counter">TASK 1 / 3</div>
+
+  <!-- Chat button -->
+  <div id="chat-btn" onclick="toggleChat()">
+    <div class="chat-btn-avatar" id="btn-avatar">🐻</div>
+    <div class="chat-btn-label">
+      <div class="chat-btn-name">BELA_THE_BEAR</div>
+      <div class="chat-btn-sub" id="btn-sub">1 NEW MESSAGE</div>
+    </div>
+    <div class="chat-btn-dot" id="chat-dot"></div>
+  </div>
+
+  <!-- Chat window -->
+  <div id="chat-window">
+    <div class="chat-header">
+      <div class="chat-header-avatar" id="chat-header-avatar">🐻</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Bela_the_Bear</div>
+        <div class="chat-header-status">● online</div>
+      </div>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+  </div>
+
+<script src="game.js"></script>
+<script>
+
+  const TASK_META = {
+    cook:     { emoji: '🍳', label: 'Cook a Meal' },
+    clean:    { emoji: '🧹', label: 'Clean Room' },
+    exercise: { emoji: '💪', label: 'Exercise' },
+    study:    { emoji: '📚', label: 'Study' },
+    winddown: { emoji: '🌙', label: 'Wind-Down' },
+  };
+
+  const MESSAGES = [
+    `Follow the path, hero. Each stop is a task you chose.`,
+    `Complete it in real life, upload your proof photo, and move on.`,
+    `The ☠️ at the end? That's your boss. You face them after all 3 are done.`,
+  ];
+
+  const DOWNLOAD_HTML = `Need sample proof photos? Grab them here or top right of the map. 🐻 
+  <br><br><a href="sample_photos.zip" download>📦 Download Sample Photos</a>`;
+
+  // Node positions as % of parchment width/height
+  const NODE_POSITIONS = [
+    { x: 72, y: 72 }, // task 1 - bottom right
+    { x: 28, y: 52 }, // task 2 - middle left
+    { x: 70, y: 32 }, // task 3 - upper right
+  ];
+
+  const START_POSITION = { x: 50, y: 89.5 }; // start - bottom centre
+  const BOSS_POSITION  = { x: 50, y: 13 }; // boss  - top centre
+
+  // Load state
+  const state = Game.get();
+  const tasks = state.selectedTasks || [];
+  const boss  = state.boss || 'toad';
+  const currentTaskIndex = state.currentTaskIndex || 0;
+
+  // Build map
+  function buildMap() {
+    const nodeLayer = document.getElementById('node-layer');
+    nodeLayer.innerHTML = '';
+
+    const allDone = currentTaskIndex >= tasks.length;
+    //const allDone = true;
+
+    // START node
+    const startNode = document.createElement('div');
+    startNode.className = 'boss-node';
+    startNode.style.left = START_POSITION.x + '%';
+    startNode.style.top  = START_POSITION.y + '%';
+    startNode.innerHTML = `
+      <div class="boss-circle" style="
+        width:88px;height:88px;font-size:40px;
+        background:rgba(40,80,40,0.4);
+        border-color:rgba(60,140,60,0.7);
+        animation:none;
+        box-shadow:0 0 16px rgba(46,204,113,0.35);
+      ">🔰</div>
+      <span class="boss-label" style="color:#2a6a2a;">START</span>
+    `;
+    nodeLayer.appendChild(startNode);
+
+    // Task nodes
+    tasks.forEach((taskId, i) => {
+      const meta   = TASK_META[taskId];
+      const pos    = NODE_POSITIONS[i];
+      const done   = i < currentTaskIndex;
+      const active = i === currentTaskIndex;
+
+      const node = document.createElement('div');
+      node.className = 'node';
+      node.id = 'node-' + i;
+      node.style.left = pos.x + '%';
+      node.style.top  = pos.y + '%';
+      if (done) node.style.opacity = '0.5';
+
+      node.innerHTML = `
+        <div class="node-circle" style="${active ? 'border-color:rgba(180,120,40,0.9);box-shadow:0 0 14px rgba(180,120,40,0.5);' : ''}">
+          <span style="font-size:42px">${meta.emoji}</span>
+          <div class="node-num">${i + 1}</div>
+        </div>
+        <span class="node-label">${meta.label}</span>
+      `;
+
+      if (active) {
+        node.onclick = () => {
+          Game.update({ currentTaskIndex: i });
+          window.location.href = 'task.html';
+        };
+      }
+
+      nodeLayer.appendChild(node);
+    });
+
+    // BOSS node
+    const bossNode = document.createElement('div');
+    bossNode.className = 'boss-node';
+    bossNode.style.left = BOSS_POSITION.x + '%';
+    bossNode.style.top  = BOSS_POSITION.y + '%';
+    if (allDone) bossNode.style.cursor = 'pointer';
+    bossNode.innerHTML = `
+      <div class="boss-circle" style="
+        width:110px;height:110px;font-size:52px;
+        ${allDone
+          ? 'border-color:rgba(200,34,0,0.9);box-shadow:0 0 20px rgba(200,34,0,0.5);'
+          : 'opacity:0.4;'}
+      ">☠️</div>
+      <span class="boss-label">The Boss</span>
+    `;
+
+    if (allDone) {
+      bossNode.onclick = () => window.location.href = 'boss.html';
+    }
+
+    nodeLayer.appendChild(bossNode);
+
+    // Character sprite next to current node
+    const charPositions = [
+      { x: START_POSITION.x - 8, y: START_POSITION.y, flip: true },
+      { x: NODE_POSITIONS[0].x + 8, y: NODE_POSITIONS[0].y, flip: false },
+      { x: NODE_POSITIONS[1].x - 8, y: NODE_POSITIONS[1].y, flip: true },
+      { x: NODE_POSITIONS[2].x + 8, y: NODE_POSITIONS[2].y, flip: false },
+    ];
+
+    const charPos = charPositions[Math.min(currentTaskIndex, charPositions.length - 1)];
+    const state2  = Game.get();
+    const c       = state2.character || {};
+    const gender  = c.gender || 'male';
+    const skin    = ['light','medium','dark'][c.skin ?? 0];
+    const hair    = (c.hair   ?? 0) + 1;
+    const armour  = (c.armour ?? 0) + 1;
+
+    const charEl = document.createElement('div');
+    charEl.style.cssText = `
+      position: absolute;
+      left: ${charPos.x}%;
+      top:  ${charPos.y}%;
+      transform: translate(${charPos.flip ? '10%' : '-110%'}, -50%)
+                 ${charPos.flip ? 'scaleX(-1)' : ''};
+      width: 60px;
+      height: 100px;
+      z-index: 3;
+    `;
+    charEl.innerHTML = `
+      <img src="images/characters/${gender}_${skin}.png"   style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;">
+      <img src="images/characters/armour_${armour}.png"   style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;">
+      <img src="images/characters/hair_${hair}.png"       style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;">
+    `;
+    nodeLayer.appendChild(charEl);
+
+    // Update step counter
+    document.getElementById('step-counter').textContent =
+      allDone
+        ? 'FACE THE BOSS'
+        : `TASK ${currentTaskIndex} / ${tasks.length}`;
+
+    setTimeout(drawPath, 50);
+  }
+
+  // Draw winding treasure map path with bezier curves
+  function drawPath() {
+    const parchment = document.getElementById('parchment');
+    const canvas    = document.getElementById('line-canvas');
+    const W = parchment.offsetWidth;
+    const H = parchment.offsetHeight;
+    canvas.width  = W;
+    canvas.height = H;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    // Convert % positions to px - START -> tasks -> BOSS
+    const pts = [
+      { x: START_POSITION.x / 100 * W, y: START_POSITION.y / 100 * H },
+      ...NODE_POSITIONS.map(p => ({ x: p.x / 100 * W, y: p.y / 100 * H })),
+      { x: BOSS_POSITION.x / 100 * W, y: BOSS_POSITION.y / 100 * H },
+    ];
+
+    // Draw the full dashed curved path
+    ctx.setLineDash([10, 10]);
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(80, 45, 10, 0.55)';
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      const curr = pts[i];
+      const next = pts[i + 1];
+      // Control points pulled toward the midpoint for a smooth S-curve
+      const cpX = (curr.x + next.x) / 2;
+      const cpY1 = curr.y;
+      const cpY2 = next.y;
+      ctx.bezierCurveTo(cpX, cpY1, cpX, cpY2, next.x, next.y);
+    }
+
+ctx.stroke();
+
+    // Draw arrowheads at midpoint of each segment
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(80, 45, 10, 0.55)';
+
+    function drawArrow(from, to) {
+      // Find midpoint of bezier - approximate by using 60% along the line
+      const mx = from.x + (to.x - from.x) * 0.62;
+      const my = from.y + (to.y - from.y) * 0.62;
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      const size = 10;
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(size, 0);
+      ctx.lineTo(-size, size * 0.6);
+      ctx.lineTo(-size, -size * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      drawArrow(pts[i], pts[i + 1]);
+    }
+
+    // Draw completed section brighter
+    if (currentTaskIndex > 0) {
+      ctx.strokeStyle = 'rgba(120, 70, 15, 0.85)';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 0; i < currentTaskIndex; i++) {
+        const curr = pts[i];
+        const next = pts[i + 1];
+        const cpX = (curr.x + next.x) / 2;
+        ctx.bezierCurveTo(cpX, curr.y, cpX, next.y, next.x, next.y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  // Chat
+  let chatOpen = false;
+  let messagesPlayed = false;
+
+  function toggleChat() {
+    chatOpen = !chatOpen;
+    document.getElementById('chat-window').classList.toggle('open', chatOpen);
+    if (chatOpen && !messagesPlayed) {
+      messagesPlayed = true;
+      document.getElementById('chat-dot').classList.add('read');
+      document.getElementById('btn-sub').textContent = 'MESSAGE READ';
+      playMessages();
+    }
+  }
+
+  function playMessages() {
+    const container = document.getElementById('chat-messages');
+    let delay = 400;
+
+    MESSAGES.forEach((text, i) => {
+      setTimeout(() => {
+        container.appendChild(makeTyping(i));
+        container.scrollTop = container.scrollHeight;
+      }, delay);
+      delay += 900;
+      setTimeout(() => {
+        document.getElementById('typing-' + i)?.remove();
+        container.appendChild(makeMsg(i, text));
+        container.scrollTop = container.scrollHeight;
+      }, delay);
+      delay += 600;
+    });
+
+    // Download message
+    setTimeout(() => {
+      container.appendChild(makeTyping('dl'));
+      container.scrollTop = container.scrollHeight;
+    }, delay);
+    delay += 900;
+    setTimeout(() => {
+      document.getElementById('typing-dl')?.remove();
+      const el = document.createElement('div');
+      el.className = 'chat-msg';
+      el.innerHTML = `<div class="msg-avatar" id="mav-dl">🐻</div><div class="msg-bubble">${DOWNLOAD_HTML}</div>`;
+      container.appendChild(el);
+      tryBela('mav-dl');
+      container.scrollTop = container.scrollHeight;
+    }, delay);
+  }
+
+  function makeTyping(i) {
+    const el = document.createElement('div');
+    el.className = 'chat-typing';
+    el.id = 'typing-' + i;
+    el.innerHTML = `<div class="msg-avatar" id="tav-${i}">🐻</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    setTimeout(() => tryBela('tav-' + i), 0);
+    return el;
+  }
+
+  function makeMsg(i, text) {
+    const el = document.createElement('div');
+    el.className = 'chat-msg';
+    el.innerHTML = `<div class="msg-avatar" id="mav-${i}">🐻</div><div class="msg-bubble">${text}</div>`;
+    setTimeout(() => tryBela('mav-' + i), 0);
+    return el;
+  }
+
+  function tryBela(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const img = new Image();
+    img.onload = () => {
+      el.innerHTML = '';
+      const c = img.cloneNode();
+      c.style.cssText = 'width:100%;height:100%;object-fit:cover;image-rendering:pixelated;';
+      el.appendChild(c);
+    };
+    img.src = 'images/characters/bela.png';
+  }
+
+  window.addEventListener('resize', drawPath);
+
+  // Init
+  buildMap();
+  tryBela('btn-avatar');
+  tryBela('chat-header-avatar');
+
+</script>
+
+<script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  const savedTime = parseFloat(localStorage.getItem('dubhub_time') || '0');
+  bgm.currentTime = savedTime;
+  bgm.play().catch(() => {});
+  window.addEventListener('beforeunload', () => {
+    localStorage.setItem('dubhub_time', bgm.currentTime);
+  });
+</script>
+</body>
+</html>

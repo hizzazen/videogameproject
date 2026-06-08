@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETTER THAN YESTERDAY – Create Your Hero</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    body {
+      background-image: url('images/backgrounds/homeScreen.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.68);
+      z-index: 0;
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* GENDER SELECT */
+    .gender-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      text-align: center;
+    }
+
+    .gender-title {
+      font-size: 17px;
+      color: #f0e6d0;
+      letter-spacing: 4px;
+      line-height: 2;
+    }
+
+    .gender-title span { color: #ff8c00; }
+
+    .gender-subtitle {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 3px;
+      margin-top: 12px;
+    }
+
+    .gender-buttons {
+      display: flex;
+      gap: 48px;
+    }
+
+    .gender-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 18px;
+      letter-spacing: 4px;
+      padding: 20px 48px;
+      border: 3px solid;
+      background: rgba(0,0,0,0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 4px;
+    }
+
+    .gender-btn.male {
+      color: #88ccff;
+      border-color: #88ccff;
+    }
+
+    .gender-btn.male:hover {
+      background: rgba(136,204,255,0.15);
+      box-shadow: 0 0 20px rgba(136,204,255,0.4);
+      transform: scale(1.05);
+    }
+
+    .gender-btn.female {
+      color: #ffaacc;
+      border-color: #ffaacc;
+    }
+
+    .gender-btn.female:hover {
+      background: rgba(255,170,204,0.15);
+      box-shadow: 0 0 20px rgba(255,170,204,0.4);
+      transform: scale(1.05);
+    }
+
+    /* CREATION */
+    .creation-container {
+      margin-top: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Page title */
+    .creation-title {
+      font-size: 10px;
+      color: #ff8c00;
+      letter-spacing: 4px;
+    }
+
+    /* Name input */
+    .name-input {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      background: rgba(0,0,0,0.7);
+      border: 2px solid #3a2a10;
+      color: #f0e6d0;
+      padding: 12px 20px;
+      width: 340px;
+      border-radius: 2px;
+      letter-spacing: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+      text-align: center;
+    }
+
+    .name-input:focus { border-color: #f5a623; }
+    .name-input::placeholder { color: #f0e6d0; font-size: 8px; }
+
+    /* Character and arrows layout */
+    .char-layout {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Arrow column */
+    .arrow-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      align-items: center;
+    }
+
+    .arrow-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hair zone height matches roughly top 33% of character */
+    .zone-hair   { height: 187px; }
+    .zone-skin   { height: 186px; }
+    .zone-armour { height: 187px; }
+
+    .arrow-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid #3a2a10;
+      color: #f5a623;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      border-radius: 2px;
+    }
+
+    .arrow-btn:hover {
+      background: #f5a623;
+      color: #000;
+      border-color: #f5a623;
+    }
+
+    /* Character preview */
+    .character-preview {
+      position: relative;
+      width: 280px;
+      height: 560px;
+      image-rendering: pixelated;
+      flex-shrink: 0;
+    }
+
+    .character-preview img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      image-rendering: pixelated;
+    }
+
+    /* Labels column */
+    .labels-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-left: 16px;
+    }
+
+    .slot-label {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .slot-label .label-name {
+      font-size: 7px;
+      color: #8a7a60;
+      letter-spacing: 2px;
+    }
+
+    .slot-label .label-value {
+      font-size: 8px;
+      color: #f0e6d0;
+      letter-spacing: 1px;
+      min-width: 120px;
+    }
+
+    /* Begin button */
+    .confirm-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      padding: 18px 40px;
+      border: 2px solid #f5a623;
+      background: transparent;
+      color: #f5a623;
+      cursor: pointer;
+      letter-spacing: 3px;
+      transition: all 0.2s;
+      border-radius: 2px;
+      width: 340px;
+    }
+
+    .confirm-btn:hover {
+      background: #f5a623;
+      color: #000;
+      box-shadow: 0 0 24px rgba(245,166,35,0.5);
+    }
+
+    .confirm-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .confirm-btn:disabled:hover {
+      background: transparent;
+      color: #f5a623;
+      box-shadow: none;
+    }
+
+    /* Back button */
+    .back-btn {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: #555;
+      background: none;
+      border: 1px solid #333;
+      padding: 8px 14px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: all 0.2s;
+      z-index: 10;
+      border-radius: 2px;
+    }
+
+    .back-btn:hover { color: #aaa; border-color: #666; }
+
+  </style>
+</head>
+<body>
+
+<!-- MUSIC -->
+<audio id="bgm" loop>
+  <source src="audio/Jimmy_Fontanez_Dub_Hub.mp3" type="audio/mpeg">
+</audio>
+
+
+  <!-- SCREEN 1: Gender -->
+  <div class="screen active" id="screen-gender">
+    <div class="gender-container">
+      <div>
+        <p class="gender-title">Choose Your <span>Hero</span></p>
+        <p class="gender-subtitle">who enters the dungeon today?</p>
+      </div>
+      <div class="gender-buttons">
+        <button class="gender-btn male"   onclick="selectGender('male')">MALE</button>
+        <button class="gender-btn female" onclick="selectGender('female')">FEMALE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Creation -->
+  <div class="screen" id="screen-creation">
+
+    <button class="back-btn" onclick="goBack()">◀ BACK</button>
+
+    <div class="creation-container">
+
+      <p class="creation-title">- Customise Your Hero -</p>
+
+      <!-- Name -->
+      <input
+        class="name-input"
+        id="hero-name"
+        type="text"
+        maxlength="12"
+        placeholder="Enter your name..."
+        oninput="checkReady()"
+      >
+
+      <!-- Character + arrows -->
+      <div class="char-layout">
+        
+        <!-- Spacer to balance labels -->
+        <div style="width: 80px;"></div>
+        <!-- Left arrows -->
+        <div class="arrow-col">
+          <div class="arrow-zone zone-hair">
+            <button class="arrow-btn" onclick="cycle('hair',-1)">◀</button>
+          </div>
+          <div class="arrow-zone zone-skin">
+            <button class="arrow-btn" onclick="cycle('skin',-1)">◀</button>
+          </div>
+          <div class="arrow-zone zone-armour">
+            <button class="arrow-btn" onclick="cycle('armour',-1)">◀</button>
+          </div>
+        </div>
+
+        <!-- Character preview -->
+        <div class="character-preview">
+          <img id="layer-body"   src="" alt="">
+          <img id="layer-armour" src="" alt="">
+          <img id="layer-hair"   src="" alt="">
+        </div>
+
+        <!-- Right arrows -->
+        <div class="arrow-col">
+          <div class="arrow-zone zone-hair">
+            <button class="arrow-btn" onclick="cycle('hair',1)">▶</button>
+          </div>
+          <div class="arrow-zone zone-skin">
+            <button class="arrow-btn" onclick="cycle('skin',1)">▶</button>
+          </div>
+          <div class="arrow-zone zone-armour">
+            <button class="arrow-btn" onclick="cycle('armour',1)">▶</button>
+          </div>
+        </div>
+
+        <!-- Labels -->
+        <div class="labels-col">
+          <div class="slot-label zone-hair">
+            <span class="label-name">HAIR</span>
+            <span class="label-value" id="hair-label">STYLE 1</span>
+          </div>
+          <div class="slot-label zone-skin">
+            <span class="label-name">SKIN</span>
+            <span class="label-value" id="skin-label">LIGHT</span>
+          </div>
+          <div class="slot-label zone-armour">
+            <span class="label-name">ARMOUR</span>
+            <span class="label-value" id="armour-label">LIGHT</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Begin button -->
+      <button class="confirm-btn" id="confirm-btn" onclick="confirmHero()" disabled>
+        ⚔ BEGIN YOUR RUN ⚔
+      </button>
+
+    </div>
+  </div>
+
+<script src="game.js"></script>
+<script>
+
+  let gender      = 'male';
+  let skinIndex   = 0;
+  let hairIndex   = 0;
+  let armourIndex = 0;
+
+  const skinNames   = ['LIGHT','MEDIUM','DARK'];
+  const hairNames   = ['STYLE 1','STYLE 2','STYLE 3'];
+  const armourNames = ['LIGHT','RED HEAVY','BLUE HEAVY'];
+
+  function selectGender(g) {
+    gender = g;
+    skinIndex = hairIndex = armourIndex = 0;
+    updateCharacter();
+    document.getElementById('screen-gender').classList.remove('active');
+    setTimeout(() => document.getElementById('screen-creation').classList.add('active'), 300);
+  }
+
+  function goBack() {
+    document.getElementById('screen-creation').classList.remove('active');
+    setTimeout(() => document.getElementById('screen-gender').classList.add('active'), 300);
+  }
+
+  function cycle(slot, dir) {
+    if (slot === 'skin') {
+      skinIndex = (skinIndex + dir + 3) % 3;
+      document.getElementById('skin-label').textContent = skinNames[skinIndex];
+    } else if (slot === 'hair') {
+      hairIndex = (hairIndex + dir + 3) % 3;
+      document.getElementById('hair-label').textContent = hairNames[hairIndex];
+    } else if (slot === 'armour') {
+      armourIndex = (armourIndex + dir + 3) % 3;
+      document.getElementById('armour-label').textContent = armourNames[armourIndex];
+    }
+    updateCharacter();
+  }
+
+  function updateCharacter() {
+    const skin = ['light','medium','dark'][skinIndex];
+    document.getElementById('layer-body').src   = `images/characters/${gender}_${skin}.png`;
+    document.getElementById('layer-hair').src   = `images/characters/hair_${hairIndex + 1}.png`;
+    document.getElementById('layer-armour').src = `images/characters/armour_${armourIndex + 1}.png`;
+  }
+
+  function checkReady() {
+    const name = document.getElementById('hero-name').value.trim();
+    document.getElementById('confirm-btn').disabled = name.length === 0;
+  }
+
+  function confirmHero() {
+    const name = document.getElementById('hero-name').value.trim();
+    if (!name) return;
+    const state = Game.init();
+    state.character = { gender, skin: skinIndex, hair: hairIndex, armour: armourIndex, name };
+    Game.save(state);
+    window.location.href = 'home.html';
+  }
+
+  updateCharacter();
+
+</script>
+
+<script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  const savedTime = parseFloat(localStorage.getItem('dubhub_time') || '0');
+  bgm.currentTime = savedTime;
+  bgm.play().catch(() => {});
+  window.addEventListener('beforeunload', () => {
+    localStorage.setItem('dubhub_time', bgm.currentTime);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETTER THAN YESTERDAY – Task</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-image: url('images/backgrounds/taskScreen.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 0;
+    }
+
+    /* PARCHMENT - starts small on wall */
+    #parchment-container {
+      position: fixed;
+      /* Small position on the left wall */
+      left: 30.6%;
+      top: 48%;
+      transform: translateY(-50%) scale(0.15);
+      transform-origin: left center;
+      z-index: 2;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      filter: brightness(0.7)
+    }
+
+    #parchment-container.zoomed {
+      left: 7%;
+      top: 50%;
+      transform: translateY(-50%) scale(1);
+      transform-origin: left center;
+      cursor: default;
+      filter: brightness(1);
+    }
+
+    .parchment-wrap {
+      position: relative;
+      width: 780px;
+      height: 980px;
+    }
+
+    .parchment-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      image-rendering: pixelated;
+    }
+
+    /* Content on parchment */
+    .parchment-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 90px 100px 100px;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.3s;
+      pointer-events: none;
+      gap: 14px;
+    }
+
+    #parchment-container.zoomed .parchment-content {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Header */
+    .task-banner {
+      background: rgba(90, 58, 10, 0.75);
+      border: 2px solid rgba(140, 90, 20, 0.8);
+      border-radius: 3px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #f0d890;
+      letter-spacing: 3px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .task-dungeon {
+      font-size: 10px;
+      color: #7a5a20;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* Divider */
+    .parchment-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(90,58,10,0.5), transparent);
+      flex-shrink: 0;
+    }
+
+    /* Flavour intro */
+    .task-flavour {
+      font-size: 12px;
+      color: #4a2e08;
+      line-height: 2.4;
+      text-align: center;
+      padding: 0 6px;
+      flex-shrink: 0;
+    }
+
+    /* Objective section */
+    .task-section-label {
+      font-size: 12px;
+      color: #8a6020;
+      letter-spacing: 3px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .task-objective {
+      font-size: 12px;
+      color: #3a2008;
+      line-height: 2.2;
+      text-align: center;
+      padding: 0 6px;
+      flex-shrink: 0;
+    }
+
+    /* Reward hint */
+    .task-reward-hint {
+      font-size: 12px;
+      color: #7a5a20;
+      letter-spacing: 1px;
+      text-align: center;
+      font-style: italic;
+      line-height: 2;
+    }
+
+    /* Upload section */
+    .upload-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upload-label {
+      font-size: 12px;
+      color: #7a5a20;
+      letter-spacing: 2px;
+    }
+
+    .upload-box {
+      width: 100%;
+      height: 100px;
+      border: 2px dashed rgba(90, 58, 10, 0.5);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: rgba(200, 160, 80, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-box:hover {
+      border-color: rgba(90, 58, 10, 0.8);
+      background: rgba(200, 160, 80, 0.2);
+    }
+
+    .upload-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-box-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      gap: 4px;
+    }
+
+    .upload-icon { font-size: 18px; }
+
+    .upload-text {
+      font-size: 8px;
+      color: #3a2008;
+      letter-spacing: 1px;
+      text-align: center;
+      line-height: 2;
+    }
+
+    .upload-preview {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .submit-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 10px 20px;
+      border: 2px solid rgba(90, 58, 10, 0.8);
+      background: rgba(90, 58, 10, 0.2);
+      color: #5a3a0a;
+      cursor: pointer;
+      letter-spacing: 2px;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+      width: 100%;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .submit-btn.ready { opacity: 1; pointer-events: all; }
+    .submit-btn.ready:hover { background: rgba(90,58,10,0.6); color: #f0d890; }
+
+    /* PRESS E PROMPT */
+    #interact-prompt {
+      position: fixed;
+      bottom: 180px;
+      left: 33.5%;
+      transform: translateX(-50%);
+      z-index: 5;
+      background: rgba(10, 8, 5, 0.88);
+      border: 2px solid #f5a623;
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-size: 8px;
+      color: #f5a623;
+      letter-spacing: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+    }
+
+    #interact-prompt.visible { opacity: 1; }
+
+    #move-prompt {
+      position: fixed;
+      bottom: 180px;
+      left: 72%;
+      transform: translateX(-50%);
+      z-index: 5;
+      background: rgba(10, 8, 5, 0.88);
+      border: 2px solid #f5a623;
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-size: 8px;
+      color: #f5a623;
+      letter-spacing: 2px;
+      white-space: nowrap;
+      animation: blink-prompt 1s step-end infinite;
+      transition: opacity 0.5s ease;
+    }
+
+    #move-prompt.hide {
+      opacity: 0;
+      pointer-events: none;
+      animation: none;
+    }
+
+    @keyframes blink-prompt {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* CHARACTER */
+    #character {
+      position: fixed;
+      bottom: 200px; /* floor level */
+      z-index: 3;
+      width: 300px;
+      height: 400px;
+      transition: transform 0.05s linear;
+    }
+
+    #character img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    #character.flipped img { transform: scaleX(-1); }
+
+    /* subtle bob when moving */
+    @keyframes walk-bob {
+      0%, 100% { bottom: 200px; }
+      50%       { bottom: 204px; }
+    }
+
+    #character.walking { animation: walk-bob 0.3s ease-in-out infinite; }
+
+    /* TASK COUNTER */
+    .task-counter {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(10, 8, 5, 0.85);
+      border: 2px solid #3a2a10;
+      border-radius: 4px;
+      padding: 10px 24px;
+      font-size: 9px;
+      color: #f5a623;
+      letter-spacing: 3px;
+    }
+    /* CARD SELECTION OVERLAY */
+    #card-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    #card-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .overlay-title {
+      font-size: 11px;
+      color: #f5a623;
+      letter-spacing: 4px;
+      text-align: center;
+    }
+
+    .overlay-sub {
+      font-size: 8px;
+      color: #8a7a60;
+      letter-spacing: 2px;
+      margin-top: -20px;
+    }
+
+    .card-choices {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 1200px;
+    }
+
+    .choice-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 40px;
+      background: #1a1208;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 8px;
+      width: 300px;
+      height: 380px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* parchment image as background */
+    .choice-card::before {
+      content: '';
+      position: absolute;
+      inset: 8px 0px;
+      background-image: url('images/backgrounds/map_parchment_portrait.png');
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+    }
+
+    /* dark overlay */
+    .choice-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 0;
+    }
+
+    .choice-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+    }
+
+    .choice-card:hover .choice-glow { opacity: 1; }
+
+    .choice-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      box-shadow: 0 0 24px rgba(245,166,35,0.5);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .choice-card-inner { display: none; }
+    .choice-type { display: none; }
+    .choice-emoji-box { display: none; }
+
+    .choice-emoji {
+      font-size: 52px;
+      position: relative;
+      z-index: 1;
+      padding: 12px 0;
+    }
+
+    .choice-name {
+      font-size: 13px;
+      color: #f0d890;
+      text-align: center;
+      line-height: 1.8;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
+      background: rgba(0,0,0,0.45);
+      width: 100%;
+      padding: 6px 6px;
+      border-radius: 2px;
+    }
+
+    .choice-flavour {
+      font-size: 8px;
+      color: #c8b080;
+      text-align: center;
+      line-height: 2;
+      font-style: italic;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      position: relative;
+      z-index: 1;
+      background: rgba(0,0,0,0.3);
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 2px;
+    }
+
+    .choice-effect {
+      font-size: 10px;
+      text-align: center;
+      line-height: 1.8;
+      font-style: normal;
+      position: relative;
+      z-index: 1;
+      background: rgba(0,0,0,0.45);
+      width: 100%;
+      padding: 6px 6px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- MUSIC -->
+<audio id="bgm" loop>
+  <source src="audio/Jeremy_Korpas_Sour_Rock.mp3" type="audio/mpeg">
+</audio>
+
+
+  <!-- Task counter -->
+  <div class="task-counter" id="task-counter">TASK 1 / 3</div>
+
+  <!-- Parchment (small on wall, zooms on E) -->
+  <div id="parchment-container" class="zoomed">
+    <div class="parchment-wrap">
+      <img class="parchment-img" src="images/backgrounds/map_parchment_portrait.png" alt="">
+      <div class="parchment-content">
+
+        <!-- Header -->
+        <div style="width:100%">
+          <div class="task-banner" id="task-banner">TASK NAME</div>
+          <div class="task-dungeon" id="task-dungeon">Dungeon Name</div>
+        </div>
+
+        <div class="parchment-divider"></div>
+
+        <!-- Flavour intro -->
+        <div class="task-flavour" id="task-flavour">Flavour text goes here.</div>
+
+        <div class="parchment-divider"></div>
+
+        <!-- Objective -->
+        <div class="task-section-label">- OBJECTIVE -</div>
+        <div class="task-objective" id="task-objective">Complete your task.</div>
+
+        <!-- Reward hint -->
+        <div class="task-reward-hint">Complete this dungeon to earn a battle card.</div>
+
+        <div class="parchment-divider"></div>
+
+        <!-- Upload -->
+        <div class="upload-section">
+          <div class="upload-label">- Upload Your Proof -</div>
+          <div class="upload-box">
+            <input type="file" accept="image/*" id="file-input" onchange="handleUpload(this)">
+            <img class="upload-preview" id="preview-img" alt="">
+            <div class="upload-box-inner">
+              <div class="upload-icon">📸</div>
+              <div class="upload-text">Click to upload<br>your proof photo</div>
+            </div>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">
+            ⚔ SUBMIT PROOF ⚔
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Character (static, right side) -->
+  <div id="character" style="
+    position: fixed;
+    left: 65%;
+    bottom: 200px;
+    width: 300px;
+    height: 400px;
+    z-index: 3;
+  ">
+    <img id="layer-body"   src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;">
+    <img id="layer-armour" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;">
+    <img id="layer-hair"   src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;">
+  </div>
+
+<script src="game.js"></script>
+<script>
+
+  // Task data
+  const TASK_DATA = {
+    cook:     {
+      name: 'Cook a Meal',
+      dungeon: 'The Kitchen Dungeon',
+      intro: 'You enter the Kitchen Dungeon. The Greasy Pan Horde stirs in the shadows. Steel your spatula, tonight you feast or you fail.',
+      objective: 'Cook a real meal from scratch. No ordering in. No instant noodles. Photograph the finished dish as your proof.'
+    },
+    clean:    {
+      name: 'Clean Your Room',
+      dungeon: 'The Chamber of Chaos',
+      intro: 'The Chamber of Chaos awaits. Clothes on the floor, dust on the shelves, a sock of unknown origin. This is your domain. Reclaim it.',
+      objective: 'Clean your room to a state you are not ashamed of. Tidy the floor, the surfaces, the chaos. Photograph the result.'
+    },
+    exercise: {
+      name: 'Exercise',
+      dungeon: 'The Training Grounds',
+      intro: 'The Training Grounds call your name. Your muscles remember yesterday\'s laziness. Today is different. Today you move.',
+      objective: 'Complete a real workout: a run, a session, a class. Anything that counts. Photograph yourself mid-effort or after.'
+    },
+    study:    {
+      name: 'Study',
+      dungeon: 'The Library of Unfinished Tasks',
+      intro: 'The Library of Unfinished Tasks looms ahead. The cursor blinks. The textbook judges you. Focus is your weapon here.',
+      objective: 'Sit down and study. No passive re-reading. Active focus. Photograph your notes, your screen, or your setup as proof.'
+    },
+    winddown: {
+      name: 'Wind-Down',
+      dungeon: 'The Scroll of Rest',
+      intro: 'The day\'s battles near their end. The Scroll of Rest awaits. Put down the device. Your mind needs silence before the boss arrives.',
+      objective: 'Spend at least 20 minutes winding down. No doom scrolling. Read, stretch, breathe. Photograph your wind-down setup.'
+    },
+  };
+
+  // State
+  const state     = Game.get();
+  const tasks     = state.selectedTasks || [];
+  const taskIndex = state.currentTaskIndex || 0;
+  const taskId    = tasks[taskIndex];
+  const task      = TASK_DATA[taskId] || TASK_DATA['cook'];
+  const c         = state.character || {};
+
+
+  let uploadedFileName = null;
+
+  function loadCharacter() {
+    const gender = c.gender || 'male';
+    const skin   = ['light','medium','dark'][c.skin ?? 0];
+    const hair   = (c.hair   ?? 0) + 1;
+    const armour = (c.armour ?? 0) + 1;
+    document.getElementById('layer-body').src   = `images/characters/${gender}_${skin}.png`;
+    document.getElementById('layer-armour').src = `images/characters/armour_${armour}.png`;
+    document.getElementById('layer-hair').src   = `images/characters/hair_${hair}.png`;
+  }
+
+
+
+  // Load task text
+  function loadTask() {
+    document.getElementById('task-banner').textContent    = task.name.toUpperCase();
+    document.getElementById('task-dungeon').textContent   = task.dungeon;
+    document.getElementById('task-flavour').textContent   = task.intro;
+    document.getElementById('task-objective').textContent = task.objective;
+    document.getElementById('task-counter').textContent   =
+      `TASK ${taskIndex + 1} / ${tasks.length}`;
+  }
+
+
+
+  // Upload
+  function handleUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('preview-img');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      document.querySelector('.upload-box-inner').style.opacity = '0';
+    };
+    reader.readAsDataURL(file);
+
+    document.getElementById('submit-btn').classList.add('ready');
+    uploadedFileName = file.name.toLowerCase();
+  }
+
+  // Submit
+function handleSubmit() {
+  if (!uploadedFileName) return;
+
+  const outcome = uploadedFileName.includes('good') ? 'good' : 'bad';
+  const completedTasks = state.completedTasks || [];
+  completedTasks[taskIndex] = outcome;
+  Game.update({ completedTasks });
+
+  // Show card selection overlay with all 3 cards from the pool
+  showCardOverlay(taskId, outcome);
+}
+
+// Show card selection overlay
+function showCardOverlay(taskId, outcome) {
+  const pool = CARDS[taskId]?.[outcome] || [];
+  const container = document.getElementById('card-choices');
+  const TYPE_COLOURS = {
+    attack: '#cc2200', block: '#2266cc', heal: '#22aa55', power: '#8833cc'
+  };
+  const TYPE_LABELS = {
+    attack: '⚔ ATTACK', block: '🛡 BLOCK', heal: '💚 HEAL', power: '⚡ POWER'
+  };
+
+  container.innerHTML = '';
+  pool.forEach(card => {
+    const colour = TYPE_COLOURS[card.type] || '#f5a623';
+    const label  = TYPE_LABELS[card.type]  || card.type.toUpperCase();
+    const el = document.createElement('div');
+    el.className = 'choice-card';
+    el.innerHTML = `
+      <div class="choice-glow"></div>
+      <div class="choice-emoji">${card.emoji}</div>
+      <div class="choice-name">${card.name}</div>
+      <div class="choice-flavour">${card.flavour}</div>
+      <div class="choice-effect" style="color:${colour};">${card.effectText}</div>
+    `;
+    el.onclick = () => pickCard(card);
+    container.appendChild(el);
+  });
+
+  document.getElementById('card-overlay').classList.add('visible');
+}
+
+// Pick a card and continue
+function pickCard(card) {
+  const cards = state.cards || [];
+  cards.push(card);
+  Game.update({ currentTaskIndex: taskIndex + 1, cards });
+  window.location.href = 'map.html';
+}
+
+  // Init
+  loadCharacter();
+  loadTask();
+  positionCharacter();
+  gameLoop();
+
+</script>
+  <!-- Card selection overlay -->
+  <div id="card-overlay">
+    <p class="overlay-title">- CHOOSE YOUR REWARD -</p>
+    <p class="overlay-sub">pick 1 card to add to your hand</p>
+    <div class="card-choices" id="card-choices"></div>
+  </div>
+
+<script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETTER THAN YESTERDAY – Boss Fight</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-image: url('images/backgrounds/bossRoom.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    /* Subtle dark overlay over the room */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.28);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* HP BARS */
+    #hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 18px 40px;
+      gap: 40px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 100%);
+    }
+
+    .hud-side {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      max-width: 360px;
+    }
+
+    .hud-side.right { align-items: flex-end; }
+
+    .hud-name {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #f5a623;
+    }
+
+    .hud-hp-text {
+      font-size: 8px;
+      color: #f0e6d0;
+      letter-spacing: 1px;
+    }
+
+    .hud-bar-wrap {
+      width: 100%;
+      height: 14px;
+      background: #1a0a0a;
+      border: 1px solid #3a2a10;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .hud-bar-fill {
+      height: 100%;
+      transition: width 0.5s ease;
+      border-radius: 2px;
+    }
+
+    .hud-bar-fill.player { background: #2ecc71; }
+    .hud-bar-fill.boss   { background: #cc2200; }
+
+    /* Shield */
+    .hud-block {
+      font-size: 8px;
+      color: #88ccff;
+      letter-spacing: 1px;
+      min-height: 14px;
+    }
+
+    /* VS badge */
+    .hud-vs {
+      font-size: 14px;
+      color: #f5a623;
+      letter-spacing: 4px;
+      padding-top: 6px;
+      text-shadow: 0 0 12px rgba(245,166,35,0.6);
+      flex-shrink: 0;
+    }
+
+    /* BATTLE LOG */
+    #battle-log {
+      position: fixed;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(10, 8, 5, 0.88);
+      border: 2px solid #3a2a10;
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-size: 10px;
+      color: #f0e6d0;
+      letter-spacing: 1px;
+      line-height: 2;
+      text-align: center;
+      min-width: 380px;
+      max-width: 520px;
+      min-height: 36px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    #battle-log.visible { opacity: 1; }
+
+    /* PLAYER CHARACTER - left side */
+    #player {
+      position: fixed;
+      left: 300px;
+      bottom: 220px;
+      z-index: 3;
+      width: 300px;
+      height: 400px;
+      image-rendering: pixelated;
+      transform: scaleX(-1);
+    }
+
+    #player img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    /* Player hit flash */
+    @keyframes player-hit {
+      0%   { filter: brightness(1); }
+      20%  { filter: brightness(3) saturate(0); transform: translateX(-12px); }
+      50%  { filter: brightness(1); transform: translateX(0); }
+      70%  { filter: brightness(2); transform: translateX(-6px); }
+      100% { filter: brightness(1); transform: translateX(0); }
+    }
+
+    #player.hit { animation: player-hit 0.5s ease forwards; }
+
+    /* Player attack lunge */
+    @keyframes player-attack {
+      0%   { transform: translateX(0); }
+      40%  { transform: translateX(80px); }
+      100% { transform: translateX(0); }
+    }
+
+    #player.attacking { animation: player-attack 0.5s ease forwards; }
+
+
+    /* Player idle bob */
+    @keyframes player-bob {
+      0%, 100% { transform: scaleX(-1) translateY(0); }
+      50%       { transform: scaleX(-1) translateY(-5px); }
+    }
+
+    #player.idle-bob { animation: player-bob 3s ease-in-out infinite; }
+
+
+    /* BOSS - right side 
+    All 4 frames stacked, only active one visible */
+    #boss-container {
+      position: fixed;
+      right: -10px;
+      bottom: 180px;
+      z-index: 3;
+      width: 1440px;
+      height: 810px; /* 16:9 crop of the 1920x1080 asset */
+    }
+
+    .boss-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+    }
+
+    .boss-frame.active { opacity: 1; }
+
+    /* Boss entrance drop-in */
+    @keyframes boss-enter {
+      from { transform: translateY(-40px) scale(0.92); opacity: 0; }
+      to   { transform: translateY(0)     scale(1);    opacity: 1; }
+    }
+
+    #boss-container { animation: boss-enter 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+    /* Boss idle float */
+    @keyframes boss-float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    #boss-container.idle-float { animation: boss-float 3s ease-in-out infinite; }
+
+    /* CARD TRAY - bottom strip */
+    #card-tray {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      height: 100px;
+      overflow: visible;
+      width: fit-content;
+      padding: 0 160px 160px;
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.97) 0%,
+        rgba(0, 0, 0, 0.95) 60%,
+        rgba(0, 0, 0, 0.80) 100%
+      );
+      border-top: 2px solid #3a2a10;
+      border-left: 2px solid #3a2a10;
+      border-right: 2px solid #3a2a10;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    /* Decorative top edge detail */
+    #card-tray::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #f5a623, #c47d0e, #f5a623, transparent);
+      opacity: 0.5;
+    }
+
+    /* Tray label */
+    #tray-label {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 7px;
+      color: #3a2a10;
+      letter-spacing: 4px;
+      white-space: nowrap;
+    }
+
+    /* Card slots */
+    .card-slot {
+      flex: none;
+      width: 180px;
+      height: 220px;
+      margin: 0 8px;
+      border: 2px dashed rgba(58, 42, 16, 0.4);
+      border-radius: 4px;
+      background: rgba(20, 14, 6, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      cursor: default;
+    }
+
+    /* Active card slots */
+    .card-slot.has-card {
+      border: none;
+      background: #1a1208;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    /* Parchment image as inner background */
+    .card-slot.has-card::before {
+      content: '';
+      position: absolute;
+      inset: 4px 0px;
+      background-image: url('images/backgrounds/map_parchment_portrait.png');
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+    }
+
+    /* Dark overlay on parchment */
+    .card-slot.has-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 0;
+    }
+
+    .card-slot.has-card:hover {
+      border-color: #f5a623;
+      transform: translateY(-20px) scale(1.4);
+      z-index: 10;
+    }
+
+    .card-slot.has-card:hover .card-hover-glow {
+      opacity: 1;
+    }
+
+    .card-hover-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      box-shadow: 0 0 20px rgba(245, 166, 35, 0.5);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Empty slot inner */
+    .slot-empty {
+      font-size: 7px;
+      color: rgba(58, 42, 16, 0.5);
+      letter-spacing: 1px;
+      text-align: center;
+      line-height: 2;
+    }
+
+    /* Card content */
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-type-badge { display: none; }
+
+    .card-icon {
+      font-size: 36px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-size: 7px;
+      color: #f0d890;
+      text-align: center;
+      line-height: 1.8;
+      letter-spacing: 0.5px;
+      background: rgba(0,0,0,0.45);
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-desc {
+      font-size: 6px;
+      color: #c8b080;
+      text-align: center;
+      line-height: 1.8;
+      font-style: italic;
+      background: rgba(0,0,0,0.3);
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-effect {
+      font-size: 6px;
+      text-align: center;
+      line-height: 1.8;
+      background: rgba(0,0,0,0.45);
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* BOSS INTRO OVERLAY */
+    #boss-intro {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      transition: opacity 0.6s ease;
+    }
+
+    #boss-intro.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .intro-eyebrow {
+      font-size: 15px;
+      color: #8a7a60;
+      letter-spacing: 5px;
+    }
+
+    .intro-name {
+      font-size: 36px;
+      color: #cc2200;
+      letter-spacing: 6px;
+      text-shadow:
+        0 0 10px rgba(200, 34, 0, 0.8),
+        0 0 30px rgba(200, 34, 0, 0.4),
+        4px 4px 0 #000;
+      animation: intro-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes intro-pulse {
+      0%, 100% { text-shadow: 0 0 10px rgba(200,34,0,0.8), 4px 4px 0 #000; }
+      50%       { text-shadow: 0 0 30px rgba(200,34,0,1), 0 0 60px rgba(200,34,0,0.5), 4px 4px 0 #000; }
+    }
+
+    .intro-sub {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 3px;
+    }
+
+    .intro-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 14px 32px;
+      border: 2px solid #cc2200;
+      background: transparent;
+      color: #cc2200;
+      cursor: pointer;
+      letter-spacing: 3px;
+      border-radius: 2px;
+      margin-top: 16px;
+      transition: background 0.2s, color 0.2s;
+      animation: blink-btn 1s step-end infinite;
+    }
+
+    .intro-btn:hover {
+      background: #cc2200;
+      color: #fff;
+      animation: none;
+    }
+
+    @keyframes blink-btn {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* END FIGHT BUTTON (placeholder for now) */
+    /* Removed dev button */
+    .dev-removed {
+      position: fixed;
+      bottom: 230px;
+      right: 40px;
+      z-index: 10;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 10px 18px;
+      border: 1px solid #3a2a10;
+      background: rgba(10,8,5,0.7);
+      color: #555;
+      cursor: pointer;
+      letter-spacing: 1px;
+      border-radius: 2px;
+      transition: all 0.2s;
+      display: none;
+    }
+
+    #end-btn:hover { border-color: #f5a623; color: #f5a623; }
+
+  </style>
+</head>
+<body>
+
+<!-- MUSIC -->
+<audio id="bgm" loop>
+  <source src="audio/Density_Time_MAZE.mp3" type="audio/mpeg">
+</audio>
+
+
+  <!-- BOSS INTRO OVERLAY -->
+  <div id="boss-intro">
+    <p class="intro-eyebrow">A BOSS APPEARS</p>
+    <p class="intro-name" id="intro-name">TOAD KING</p>
+    <p class="intro-sub">prepare yourself</p>
+    <button class="intro-btn" onclick="startFight()">⚔ FIGHT ⚔</button>
+  </div>
+
+  <!-- HUD - HP bars -->
+  <div id="hud">
+
+    <!-- Player side -->
+    <div class="hud-side left">
+      <div class="hud-name" id="player-name">HERO</div>
+      <div class="hud-hp-text"><span id="player-hp-text">100</span> / 100 HP</div>
+      <div class="hud-bar-wrap">
+        <div class="hud-bar-fill player" id="player-bar" style="width:100%"></div>
+      </div>
+      <div class="hud-block" id="player-block"></div>
+    </div>
+
+    <div class="hud-vs">VS</div>
+
+    <!-- Boss side -->
+    <div class="hud-side right">
+      <div class="hud-name" id="boss-name">TOAD KING</div>
+      <div class="hud-hp-text"><span id="boss-hp-text">100</span> / 100 HP</div>
+      <div class="hud-bar-wrap">
+        <div class="hud-bar-fill boss" id="boss-bar" style="width:100%"></div>
+      </div>
+      <div class="hud-block" id="boss-block"></div>
+    </div>
+
+  </div>
+
+  <!-- Battle log -->
+  <div id="battle-log"></div>
+
+  <!-- PLAYER CHARACTER - left -->
+  <div id="player">
+    <img id="p-body"   src="" alt="">
+    <img id="p-armour" src="" alt="">
+    <img id="p-hair"   src="" alt="">
+  </div>
+
+  <!-- BOSS - right -->
+  <div id="boss-container">
+    <img class="boss-frame active" id="boss-f1" src="" alt="boss idle">
+    <img class="boss-frame"        id="boss-f2" src="" alt="boss hit">
+    <img class="boss-frame"        id="boss-f3" src="" alt="boss attack">
+    <img class="boss-frame"        id="boss-f4" src="" alt="boss dead">
+  </div>
+
+  <!-- CARD TRAY - bottom -->
+  <div id="card-tray">
+    <div id="tray-label">- YOUR HAND -</div>
+
+    <!-- 3 card slots -->
+    <div class="card-slot" id="slot-0">
+      <div class="slot-empty">empty</div>
+    </div>
+    <div class="card-slot" id="slot-1">
+      <div class="slot-empty">empty</div>
+    </div>
+    <div class="card-slot" id="slot-2">
+      <div class="slot-empty">empty</div>
+    </div>
+
+  </div>
+
+<script src="game.js"></script>
+<script>
+
+  /* Load state */
+  const state      = Game.get();
+  const c          = state.character || {};
+  const boss       = 'toad';
+  const bossMaxHP  = 100;
+  const playerMaxHP = 100;
+
+  let playerHP    = state.playerHP ?? 100;
+  let bossHP      = state.bossHP   ?? 100;
+  let playerBlock  = 0;
+  let fightStarted = false;
+  let hand         = [];
+
+  /* Boss names */
+  const BOSS_NAMES = {
+    toad: 'TOAD KING',
+  };
+
+  /* Type colours */
+  const TYPE_COLOURS = {
+    attack: '#cc2200',
+    block:  '#2266cc',
+    heal:   '#22aa55',
+    power:  '#8833cc',
+  };
+
+  const TYPE_LABELS = {
+    attack: '⚔ ATTACK',
+    block:  '🛡 BLOCK',
+    heal:   '💚 HEAL',
+    power:  '⚡ POWER',
+  };
+
+  // Load character sprites
+  function loadCharacter() {
+    const gender = c.gender || 'male';
+    const skin   = ['light','medium','dark'][c.skin ?? 0];
+    const hair   = (c.hair   ?? 0) + 1;
+    const armour = (c.armour ?? 0) + 1;
+    document.getElementById('p-body').src   = `images/characters/${gender}_${skin}.png`;
+    document.getElementById('p-armour').src = `images/characters/armour_${armour}.png`;
+    document.getElementById('p-hair').src   = `images/characters/hair_${hair}.png`;
+    document.getElementById('player-name').textContent = (c.name || 'HERO').toUpperCase();
+  }
+
+  // Load boss sprites
+  function loadBoss() {
+    const b = boss;
+    document.getElementById('boss-f1').src = `images/bosses/${b}_1.png`;
+    document.getElementById('boss-f2').src = `images/bosses/${b}_2.png`;
+    document.getElementById('boss-f3').src = `images/bosses/${b}_3.png`;
+    document.getElementById('boss-f4').src = `images/bosses/${b}_4.png`;
+    const name = BOSS_NAMES[b] || 'THE BOSS';
+    document.getElementById('intro-name').textContent = name;
+    document.getElementById('boss-name').textContent  = name;
+  }
+
+  // Boss frame switcher
+  function setBossFrame(n) {
+    document.querySelectorAll('.boss-frame').forEach(f => f.classList.remove('active'));
+    document.getElementById('boss-f' + n).classList.add('active');
+  }
+
+  function bossAnim(frame, durationMs, thenIdle = true) {
+    const container = document.getElementById('boss-container');
+    container.classList.remove('idle-float');
+    setBossFrame(frame);
+    setTimeout(() => {
+      if (thenIdle) {
+        setBossFrame(1);
+        container.classList.add('idle-float');
+      }
+    }, durationMs);
+  }
+
+  // Update HUD
+  function updateHUD() {
+    const pPct = Math.max(0, (playerHP / playerMaxHP) * 100);
+    document.getElementById('player-bar').style.width     = pPct + '%';
+    document.getElementById('player-hp-text').textContent = Math.max(0, playerHP);
+    document.getElementById('player-block').textContent   = playerBlock > 0 ? `🛡 ${playerBlock} BLOCK` : '';
+
+    const bPct = Math.max(0, (bossHP / bossMaxHP) * 100);
+    document.getElementById('boss-bar').style.width     = bPct + '%';
+    document.getElementById('boss-hp-text').textContent = Math.max(0, bossHP);
+  }
+
+  // Battle log
+  let logTimer;
+  function showLog(text, durationMs = null) {
+    const el = document.getElementById('battle-log');
+    el.textContent = text;
+    el.classList.add('visible');
+    clearTimeout(logTimer);
+    if (durationMs !== null) {
+      logTimer = setTimeout(() => el.classList.remove('visible'), durationMs);
+    }
+  }
+
+  // Render cards into tray
+  function renderHand() {
+    // Use in-memory hand, not state.cards
+    for (let i = 0; i < 3; i++) {
+      const slot = document.getElementById('slot-' + i);
+      const card = hand[i];
+
+      if (card) {
+        const colour = TYPE_COLOURS[card.type] || '#f5a623';
+        const label  = TYPE_LABELS[card.type]  || card.type.toUpperCase();
+        slot.className = 'card-slot has-card';
+        slot.innerHTML = `
+          <div class="card-hover-glow"></div>
+          <div class="card-inner">
+            <div class="card-icon">${card.emoji}</div>
+            <div class="card-title">${card.name}</div>
+            <div class="card-desc">${card.flavour}</div>
+            <div class="card-effect" style="color:${colour};">${card.effectText}</div>
+          </div>
+        `;
+        slot.onclick = () => playCard(i);
+      } else {
+        slot.className = 'card-slot';
+        slot.innerHTML = `<div class="slot-empty">empty</div>`;
+        slot.onclick = null;
+      }
+    }
+  }
+
+  function playCard(index) {
+      if (!fightStarted) return;
+      const card = hand[index];
+      if (!card) return;
+
+      // Hide the opening message as soon as first card is clicked
+      document.getElementById('battle-log').classList.remove('visible');
+
+      // Disable all cards while animation plays
+      document.querySelectorAll('.card-slot.has-card').forEach(s => {
+        s.style.pointerEvents = 'none';
+        s.style.opacity = '0.5';
+      });
+
+      let dmg      = (card.effect.damage  || 0);
+      let healAmt  = (card.effect.heal    || 0);
+      let blockAmt = (card.effect.block   || 0);
+      let selfDmg  = (card.effect.selfDmg || 0);
+
+      // Player attack animation
+      const playerEl = document.getElementById('player');
+      playerEl.classList.add('attacking');
+      setTimeout(() => playerEl.classList.remove('attacking'), 600);
+
+      // Step 1 - boss takes hit
+      setTimeout(() => {
+        if (dmg > 0) {
+          bossHP = Math.max(0, bossHP - dmg);
+          bossAnim(2, 600);
+        }
+        if (healAmt > 0) playerHP = Math.min(playerMaxHP, playerHP + healAmt);
+        if (blockAmt > 0) playerBlock += blockAmt;
+        updateHUD();
+
+        // Step 2 - if attack card, boss retaliates
+        if (selfDmg > 0) {
+          setTimeout(() => {
+            bossAnim(3, 600);
+            setTimeout(() => {
+              const blocked = Math.min(playerBlock, selfDmg);
+              const actual  = Math.max(0, selfDmg - blocked);
+              playerBlock   = Math.max(0, playerBlock - selfDmg);
+              playerHP      = Math.max(0, playerHP - actual);
+
+              playerEl.classList.add('hit');
+              setTimeout(() => playerEl.classList.remove('hit'), 600);
+
+              updateHUD();
+              resolveAfterCard(index);
+            }, 700);
+          }, 800);
+        } else {
+          resolveAfterCard(index);
+        }
+      }, 500);
+    }
+
+  // Resolve state after a card plays
+  function resolveAfterCard(index) {
+    hand[index] = null;
+    renderHand();
+
+    if (bossHP <= 0) {
+      setTimeout(() => endFight('win'), 800);
+      return;
+    }
+    if (playerHP <= 0) {
+      setTimeout(() => endFight('loss'), 800);
+      return;
+    }
+
+    // Check if all cards played - resolve by HP totals
+    const hasCards = hand.some(c => c !== null);
+    if (!hasCards) {
+      setTimeout(() => endFight(bossHP <= 0 ? 'win' : 'loss'), 800);
+      return;
+    }
+
+    // Re-enable cards for next pick
+    setTimeout(() => {
+      document.querySelectorAll('.card-slot').forEach(s => {
+        s.style.pointerEvents = '';
+        s.style.opacity = '';
+      });
+    }, 600);
+  }
+
+  // End fight
+  function endFight(outcome) {
+    if (outcome === 'win') {
+      bossAnim(4, 99999, false);
+      document.getElementById('boss-container').classList.remove('idle-float');
+    }
+    Game.update({ playerHP, bossHP, fightOutcome: outcome });
+    setTimeout(() => window.location.href = 'end.html', 1800);
+  }
+
+  // Start fight
+  function startFight() {
+    document.getElementById('boss-intro').classList.add('hidden');
+    fightStarted = true;
+    hand = [...(state.cards || [])]; // Initialise hand once from state
+    document.getElementById('boss-container').classList.add('idle-float');
+    document.getElementById('player').classList.add('idle-bob');
+    renderHand();
+    setTimeout(() => {
+      showLog(`${BOSS_NAMES[boss]} looms before you. Click cards to play.`);
+    }, 400);
+  }
+
+  // Init
+  loadCharacter();
+  loadBoss();
+  updateHUD();
+
+</script>
+
+<script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+</script>
+</body>
+</html>

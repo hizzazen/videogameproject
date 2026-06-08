@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --gold: #f5a623;
+  --dark-gold: #c47d0e;
+  --red: #cc2200;
+  --dark-red: #8b1500;
+  --green: #2ecc71;
+  --dark-bg: #0a0a0a;
+  --panel-bg: rgba(10, 8, 5, 0.88);
+  --border-color: #3a2a10;
+  --text-primary: #f0e6d0;
+  --text-muted: #8a7a60;
+  --font-pixel: 'Press Start 2P', monospace;
+}
+
+body {
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  font-family: var(--font-pixel);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Dungeon background */
+.dungeon-bg {
+  background-image: url('images/backgrounds/corridor.jpg');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  min-height: 100vh;
+}
+
+.dungeon-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.dungeon-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Panels */
+.panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-color);
+  padding: 24px;
+  border-radius: 4px;
+}
+
+/* Buttons */
+.btn {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  padding: 12px 24px;
+  border: 2px solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: background 0.2s, color 0.2s;
+  border-radius: 2px;
+}
+
+.btn:hover {
+  background: var(--gold);
+  color: #000;
+}
+
+.btn-red {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn-red:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+.btn-large {
+  font-size: 12px;
+  padding: 16px 36px;
+}
+
+/* Health bars */
+.health-bar-wrap {
+  width: 100%;
+  background: #1a0a0a;
+  border: 1px solid #333;
+  height: 18px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.health-bar-fill {
+  height: 100%;
+  background: var(--red);
+  transition: width 0.5s ease;
+}
+
+.health-bar-fill.player {
+  background: var(--green);
+}
+
+/* Cards */
+.card-item {
+  background: #1a1208;
+  border: 2px solid var(--border-color);
+  padding: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+  text-align: center;
+}
+
+.card-item:hover {
+  border-color: var(--gold);
+  transform: translateY(-4px);
+}
+
+.card-item.selected {
+  border-color: var(--gold);
+  background: #2a1e08;
+}
+
+.card-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.card-type {
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.card-name {
+  font-size: 10px;
+  color: var(--gold);
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.card-flavour {
+  font-size: 8px;
+  color: #aaa;
+  font-style: italic;
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+
+.card-effect {
+  font-size: 8px;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+/* Bela message box */
+.bela-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-color);
+  padding: 20px;
+  border-radius: 4px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bela-avatar {
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.bela-name {
+  font-size: 9px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.bela-text {
+  font-size: 9px;
+  line-height: 2;
+  color: var(--text-primary);
+  min-height: 40px;
+}
+
+.bela-continue {
+  font-size: 8px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Character display */
+.character-display {
+  position: relative;
+  width: 120px;
+  height: 180px;
+  margin: 0 auto;
+}
+
+.character-display img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* Slot selector */
+.slot-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.slot-arrow {
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--gold);
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.slot-arrow:hover {
+  background: var(--gold);
+  color: #000;
+}
+
+.slot-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Task checklist */
+.task-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.task-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1208;
+  border: 2px solid var(--border-color);
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.2s;
+  font-size: 8px;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.task-option:hover {
+  border-color: var(--gold);
+}
+
+.task-option.selected {
+  border-color: var(--gold);
+  background: #2a1e08;
+}
+
+.task-option.selected .task-checkbox {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.task-checkbox {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+/* Section title */
+.section-title {
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-color);
+  margin: 20px 0;
+}
+
+/* Utility */
+.text-center { text-align: center; }
+.text-gold { color: var(--gold); }
+.text-muted { color: var(--text-muted); }
+.text-red { color: var(--red); }
+.text-green { color: var(--green); }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
